@@ -130,7 +130,7 @@ export default function Home() {
       )}
 
       <Link to="/events/new" className="fab" aria-label="הוספת אירוע">
-        ＋
+        +
       </Link>
       {toast}
     </div>

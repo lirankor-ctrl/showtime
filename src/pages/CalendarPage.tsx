@@ -46,6 +46,13 @@ export default function CalendarPage() {
   const month = cursor.getMonth();
   const selectedEvents = byDate.get(selected) ?? [];
 
+  // Legend shows only the categories the user actually has events in, in the
+  // canonical CATEGORIES order. Updates automatically as events change.
+  const usedCategories = useMemo(() => {
+    const used = new Set(events.map((e) => e.category));
+    return CATEGORIES.filter((c) => used.has(c.id));
+  }, [events]);
+
   function move(delta: number) {
     setCursor(new Date(cursor.getFullYear(), cursor.getMonth() + delta, 1));
   }
@@ -96,14 +103,16 @@ export default function CalendarPage() {
         })}
       </div>
 
-      {/* Category legend */}
-      <div className="chip-row" style={{ marginTop: 14, flexWrap: "wrap", overflow: "visible" }}>
-        {CATEGORIES.map((c) => (
-          <span key={c.id} className="badge" style={{ background: c.color, opacity: 0.9 }}>
-            {c.label}
-          </span>
-        ))}
-      </div>
+      {/* Category legend — only the categories actually in use. */}
+      {usedCategories.length > 0 && (
+        <div className="chip-row" style={{ marginTop: 14, flexWrap: "wrap", overflow: "visible" }}>
+          {usedCategories.map((c) => (
+            <span key={c.id} className="badge" style={{ background: c.color, opacity: 0.9 }}>
+              {c.label}
+            </span>
+          ))}
+        </div>
+      )}
 
       <h2 className="section-title">אירועים ב־{selected.split("-").reverse().join("/")}</h2>
       {selectedEvents.length === 0 ? (

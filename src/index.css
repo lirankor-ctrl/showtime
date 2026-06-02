@@ -20,6 +20,7 @@
   --maxw: 560px;
   --nav-h: 68px;
   --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-top: env(safe-area-inset-top, 0px);
   font-synthesis: none;
 }
 
@@ -32,13 +33,22 @@ html,
 body,
 #root {
   margin: 0;
-  height: 100%;
+  /* dvh fills the *visible* viewport on iOS (excludes the URL bar when hidden),
+     so no white/browser-coloured strip is ever exposed below the app. */
+  min-height: 100%;
+  min-height: 100dvh;
+}
+
+/* Dark base so overscroll / rubber-banding never reveals a white page. */
+html {
+  background: var(--bg);
 }
 
 body {
   background:
     radial-gradient(1200px 600px at 50% -10%, #241433 0%, transparent 60%),
     linear-gradient(180deg, var(--bg-2), var(--bg) 60%);
+  background-color: var(--bg);
   color: var(--text);
   font-family: "Heebo", "Assistant", "Segoe UI", system-ui, -apple-system, sans-serif;
   font-size: 16px;
@@ -77,6 +87,7 @@ h3 {
 .app-shell {
   position: relative;
   min-height: 100%;
+  min-height: 100dvh;
   max-width: var(--maxw);
   margin: 0 auto;
   padding-bottom: calc(var(--nav-h) + var(--safe-bottom) + 16px);
@@ -122,10 +133,10 @@ h3 {
 .curtain.left::after {
   left: 0;
 }
-/* Decorative scalloped valance across the very top. */
+/* Decorative scalloped valance across the very top, below the notch / island. */
 .valance {
   position: fixed;
-  top: 0;
+  top: var(--safe-top);
   left: 0;
   right: 0;
   height: 26px;
@@ -138,7 +149,10 @@ h3 {
 }
 
 .page {
-  padding: 36px clamp(16px, 6vw, 26px) 8px;
+  /* Clear the notch/Dynamic Island + the decorative valance, then a small gap.
+     On non-notched devices --safe-top is 0, trimming the previously excessive
+     top spacing. */
+  padding: calc(var(--safe-top) + 30px) clamp(16px, 6vw, 26px) 8px;
   position: relative;
   z-index: 1;
 }
@@ -367,6 +381,11 @@ h3 {
 .btn:active {
   transform: scale(0.97);
 }
+.btn:disabled {
+  opacity: 0.55;
+  cursor: default;
+  transform: none;
+}
 .btn.primary {
   background: linear-gradient(180deg, var(--curtain-2), var(--curtain));
   border-color: var(--curtain-2);
@@ -400,13 +419,19 @@ h3 {
   inset-inline-end: max(20px, calc((100vw - var(--maxw)) / 2 + 20px));
   bottom: calc(var(--nav-h) + var(--safe-bottom) + 18px);
   z-index: 8;
+  /* Flex centering keeps the "+" glyph perfectly centred on every device. */
+  display: flex;
+  align-items: center;
+  justify-content: center;
   width: 58px;
   height: 58px;
+  padding: 0;
   border-radius: 50%;
   border: 1px solid var(--gold);
   background: linear-gradient(180deg, var(--gold-soft), var(--gold));
   color: #1a1020;
-  font-size: 1.8rem;
+  font-size: 1.9rem;
+  font-weight: 700;
   line-height: 1;
   box-shadow: 0 10px 26px rgba(224, 181, 74, 0.4);
 }
@@ -548,16 +573,32 @@ h3 {
 .cal-cell.out {
   opacity: 0.3;
 }
+/* Today: subtle gold ring + gold numeral — present but understated. */
 .cal-cell.today {
   border-color: var(--gold);
+  color: var(--gold-soft);
+  font-weight: 800;
 }
+/* Selected: strong, filled — clearly the active day. */
 .cal-cell.selected {
-  background: var(--surface-2);
-  border-color: var(--gold-soft);
+  background: linear-gradient(180deg, var(--gold-soft), var(--gold));
+  border-color: var(--gold);
+  color: #1a1020;
+  font-weight: 800;
+  box-shadow: 0 4px 14px rgba(224, 181, 74, 0.35);
+}
+/* Today *and* selected: filled day with an outer gold ring to combine both. */
+.cal-cell.today.selected {
+  color: #1a1020;
+  box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--gold), 0 4px 14px rgba(224, 181, 74, 0.4);
 }
 .cal-dots {
   display: flex;
   gap: 3px;
+}
+/* Keep event dots visible against the filled selected background. */
+.cal-cell.selected .cal-dots i {
+  box-shadow: 0 0 0 1px rgba(26, 16, 32, 0.55);
 }
 .cal-dots i {
   width: 6px;
@@ -695,10 +736,12 @@ h3 {
 
 .auth-wrap {
   min-height: 100vh;
+  min-height: 100dvh;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 24px clamp(20px, 8vw, 40px);
+  padding: calc(var(--safe-top) + 24px) clamp(20px, 8vw, 40px)
+    calc(var(--safe-bottom) + 24px);
   position: relative;
   z-index: 1;
 }

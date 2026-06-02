@@ -120,7 +120,7 @@ export default function EventsList() {
       )}
 
       <Link to="/events/new" className="fab" aria-label="הוספת אירוע">
-        ＋
+        +
       </Link>
     </div>
   );

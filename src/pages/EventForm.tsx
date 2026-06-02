@@ -7,6 +7,14 @@ import RatingStars from "../components/RatingStars";
 import PhotoGallery from "../components/PhotoGallery";
 import type { CategoryId } from "../types";
 
+// Quarter-hour options (00/15/30/45) covering a full day, offered as quick
+// suggestions on the time field. Manual entry of any exact minute still works.
+const QUARTER_HOUR_TIMES: string[] = Array.from({ length: 24 * 4 }, (_, i) => {
+  const h = String(Math.floor(i / 4)).padStart(2, "0");
+  const m = String((i % 4) * 15).padStart(2, "0");
+  return `${h}:${m}`;
+});
+
 const empty: NewEventInput = {
   title: "",
   category: "play",
@@ -43,6 +51,7 @@ export default function EventForm() {
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (busy) return; // guard against double-submit (e.g. Enter + click)
     if (!form.title.trim()) {
       setError("יש להזין שם לאירוע");
       return;
@@ -117,9 +126,17 @@ export default function EventForm() {
             <label>שעה</label>
             <input
               type="time"
+              list="time-options"
               value={form.time ?? ""}
               onChange={(e) => set("time", e.target.value)}
             />
+            {/* Quick 15-minute suggestions; any exact time can still be typed
+                or chosen from the native picker. */}
+            <datalist id="time-options">
+              {QUARTER_HOUR_TIMES.map((t) => (
+                <option key={t} value={t} />
+              ))}
+            </datalist>
           </div>
         </div>
 

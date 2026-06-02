@@ -21,6 +21,7 @@ export default function SubscriptionForm() {
 
   const [form, setForm] = useState<NewSubscriptionInput>(empty);
   const [error, setError] = useState("");
+  const [busy, setBusy] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -35,10 +36,13 @@ export default function SubscriptionForm() {
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (busy) return; // guard against double-submit → duplicate subscriptions
     if (!form.name.trim()) {
       setError("יש להזין שם למנוי");
       return;
     }
+    setBusy(true);
+    setError("");
     try {
       await saveSubscription({
         ...form,
@@ -50,16 +54,20 @@ export default function SubscriptionForm() {
       navigate("/subscriptions");
     } catch (err) {
       setError(err instanceof Error ? err.message : "שמירת המנוי נכשלה");
+      setBusy(false);
     }
   }
 
   async function onDelete() {
+    if (busy) return;
     if (id && confirm("למחוק את המנוי? האירועים המקושרים יישארו ללא מנוי.")) {
+      setBusy(true);
       try {
         await removeSubscription(id);
         navigate("/subscriptions");
       } catch {
         setError("מחיקת המנוי נכשלה");
+        setBusy(false);
       }
     }
   }
@@ -163,13 +171,18 @@ export default function SubscriptionForm() {
           />
         </div>
 
-        <button type="submit" className="btn primary block">
-          {editing ? "שמירת שינויים" : "הוספת המנוי"}
+        <button type="submit" className="btn primary block" disabled={busy}>
+          {busy ? "שומר…" : editing ? "שמירת שינויים" : "הוספת המנוי"}
         </button>
       </form>
 
       {editing && (
-        <button className="btn danger block" style={{ marginTop: 14 }} onClick={onDelete}>
+        <button
+          className="btn danger block"
+          style={{ marginTop: 14 }}
+          onClick={onDelete}
+          disabled={busy}
+        >
           🗑️ מחיקת המנוי
         </button>
       )}

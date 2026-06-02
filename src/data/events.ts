@@ -1,4 +1,5 @@
 import { supabase } from "../lib/supabase";
+import { dbError } from "../lib/errors";
 import type { ShowEvent } from "../types";
 import { eventFromRow, eventToRow } from "./mappers";
 
@@ -10,7 +11,7 @@ export async function fetchEvents(): Promise<ShowEvent[]> {
     .select("*")
     .order("event_date", { ascending: true })
     .order("event_time", { ascending: true, nullsFirst: true });
-  if (error) throw error;
+  if (error) throw dbError(error, "טעינת האירועים נכשלה");
   return (data ?? []).map(eventFromRow);
 }
 
@@ -23,7 +24,7 @@ export async function insertEvent(
     .insert({ ...eventToRow(draft), user_id: userId })
     .select("*")
     .single();
-  if (error) throw error;
+  if (error) throw dbError(error, "שמירת האירוע נכשלה");
   return eventFromRow(data);
 }
 
@@ -37,11 +38,11 @@ export async function updateEvent(
     .eq("id", id)
     .select("*")
     .single();
-  if (error) throw error;
+  if (error) throw dbError(error, "שמירת האירוע נכשלה");
   return eventFromRow(data);
 }
 
 export async function deleteEventRow(id: string): Promise<void> {
   const { error } = await supabase.from("events").delete().eq("id", id);
-  if (error) throw error;
+  if (error) throw dbError(error, "מחיקת האירוע נכשלה");
 }

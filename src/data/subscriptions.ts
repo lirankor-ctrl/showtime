@@ -1,4 +1,5 @@
 import { supabase } from "../lib/supabase";
+import { dbError } from "../lib/errors";
 import type { Subscription } from "../types";
 import { subscriptionFromRow, subscriptionToRow } from "./mappers";
 
@@ -9,7 +10,7 @@ export async function fetchSubscriptions(): Promise<Subscription[]> {
     .from("subscriptions")
     .select("*")
     .order("name", { ascending: true });
-  if (error) throw error;
+  if (error) throw dbError(error, "טעינת המנויים נכשלה");
   return (data ?? []).map(subscriptionFromRow);
 }
 
@@ -22,7 +23,7 @@ export async function insertSubscription(
     .insert({ ...subscriptionToRow(draft), user_id: userId })
     .select("*")
     .single();
-  if (error) throw error;
+  if (error) throw dbError(error, "שמירת המנוי נכשלה");
   return subscriptionFromRow(data);
 }
 
@@ -36,7 +37,7 @@ export async function updateSubscription(
     .eq("id", id)
     .select("*")
     .single();
-  if (error) throw error;
+  if (error) throw dbError(error, "שמירת המנוי נכשלה");
   return subscriptionFromRow(data);
 }
 
@@ -49,10 +50,10 @@ export async function setRemainingTickets(
     .from("subscriptions")
     .update({ remaining_tickets: remaining })
     .eq("id", id);
-  if (error) throw error;
+  if (error) throw dbError(error, "עדכון המנוי נכשל");
 }
 
 export async function deleteSubscriptionRow(id: string): Promise<void> {
   const { error } = await supabase.from("subscriptions").delete().eq("id", id);
-  if (error) throw error;
+  if (error) throw dbError(error, "מחיקת המנוי נכשלה");
 }

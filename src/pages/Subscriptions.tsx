@@ -68,7 +68,7 @@ export default function Subscriptions() {
       )}
 
       <Link to="/subscriptions/new" className="fab" aria-label="הוספת מנוי">
-        ＋
+        +
       </Link>
     </div>
   );

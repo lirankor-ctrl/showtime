@@ -95,6 +95,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
   }, [loading, events]);
 
+  // Keep the in-memory list in the same order the server returns (date asc,
+  // then time) so optimistic inserts land in the right place before a reload.
+  const sortEvents = (list: ShowEvent[]): ShowEvent[] =>
+    [...list].sort(
+      (a, b) =>
+        a.date.localeCompare(b.date) || (a.time ?? "").localeCompare(b.time ?? ""),
+    );
+
   const remainingOf = useCallback(
     (subId: string): number => {
       const s = subscriptions.find((x) => x.id === subId);
@@ -135,19 +143,35 @@ export function AppProvider({ children }: { children: ReactNode }) {
       delete (draft as { id?: string }).id;
 
       // Persist the event, then the subscription counters.
-      if (input.id) {
-        await updateEvent(input.id, draft);
-      } else {
-        const created = await insertEvent(userId, draft);
-        input = { ...input, id: created.id };
-      }
+      const saved = input.id
+        ? await updateEvent(input.id, draft)
+        : await insertEvent(userId, draft);
+
+      const counterUpdates: Array<[string, number]> = [];
       for (const [subId, remaining] of next) {
         if (remaining !== remainingOf(subId)) {
           await setRemainingTickets(subId, remaining);
+          counterUpdates.push([subId, remaining]);
         }
       }
-      await reload();
-      return input.id!;
+
+      // The write has already succeeded — update local state immediately so a
+      // transient refresh failure can never report success as failure (which
+      // would tempt the user to retry and create a duplicate). The reload then
+      // reconciles in the background.
+      setEvents((cur) =>
+        sortEvents([...cur.filter((e) => e.id !== saved.id), saved]),
+      );
+      if (counterUpdates.length) {
+        setSubscriptions((cur) =>
+          cur.map((s) => {
+            const u = counterUpdates.find(([sid]) => sid === s.id);
+            return u ? { ...s, remainingTickets: u[1] } : s;
+          }),
+        );
+      }
+      reload().catch(() => {});
+      return saved.id;
     },
     [userId, events, subscriptions, remainingOf, reload],
   );
@@ -162,7 +186,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       }
       await deleteStorageForEvent(id); // DB photo rows cascade with the event
       await deleteEventRow(id);
-      await reload();
+      setEvents((cur) => cur.filter((e) => e.id !== id));
+      reload().catch(() => {});
     },
     [events, remainingOf, reload],
   );
@@ -172,15 +197,18 @@ export function AppProvider({ children }: { children: ReactNode }) {
       if (!userId) throw new Error("יש להתחבר כדי לשמור מנויים");
       const draft = { ...input };
       delete (draft as { id?: string }).id;
-      let id = input.id;
-      if (id) {
-        await updateSubscription(id, draft);
-      } else {
-        const created = await insertSubscription(userId, draft);
-        id = created.id;
-      }
-      await reload();
-      return id;
+      const saved = input.id
+        ? await updateSubscription(input.id, draft)
+        : await insertSubscription(userId, draft);
+
+      // Reflect the write locally right away (see saveEvent for the rationale).
+      setSubscriptions((cur) =>
+        [...cur.filter((s) => s.id !== saved.id), saved].sort((a, b) =>
+          a.name.localeCompare(b.name),
+        ),
+      );
+      reload().catch(() => {});
+      return saved.id;
     },
     [userId, reload],
   );
@@ -189,7 +217,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     async (id: string) => {
       // Events keep their row; their subscription_id is set null by the FK.
       await deleteSubscriptionRow(id);
-      await reload();
+      setSubscriptions((cur) => cur.filter((s) => s.id !== id));
+      reload().catch(() => {});
     },
     [reload],
   );
