@@ -58,20 +58,22 @@ export default function App() {
         <AuthScreen />
       ) : (
         <>
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/calendar" element={<CalendarPage />} />
-            <Route path="/events" element={<EventsList />} />
-            <Route path="/events/new" element={<EventForm />} />
-            <Route path="/events/:id" element={<EventDetail />} />
-            <Route path="/events/:id/edit" element={<EventForm />} />
-            <Route path="/subscriptions" element={<Subscriptions />} />
-            <Route path="/subscriptions/new" element={<SubscriptionForm />} />
-            <Route path="/subscriptions/:id/edit" element={<SubscriptionForm />} />
-            <Route path="/memories" element={<Memories />} />
-            <Route path="/statistics" element={<Statistics />} />
-            <Route path="/settings" element={<Settings />} />
-          </Routes>
+          <main className="app-content">
+            <Routes>
+              <Route path="/" element={<Home />} />
+              <Route path="/calendar" element={<CalendarPage />} />
+              <Route path="/events" element={<EventsList />} />
+              <Route path="/events/new" element={<EventForm />} />
+              <Route path="/events/:id" element={<EventDetail />} />
+              <Route path="/events/:id/edit" element={<EventForm />} />
+              <Route path="/subscriptions" element={<Subscriptions />} />
+              <Route path="/subscriptions/new" element={<SubscriptionForm />} />
+              <Route path="/subscriptions/:id/edit" element={<SubscriptionForm />} />
+              <Route path="/memories" element={<Memories />} />
+              <Route path="/statistics" element={<Statistics />} />
+              <Route path="/settings" element={<Settings />} />
+            </Routes>
+          </main>
           <BottomNav />
           <MigrationPrompt />
         </>

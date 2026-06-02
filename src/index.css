@@ -19,41 +19,49 @@
   --shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
   --maxw: 560px;
   --nav-h: 68px;
-  --safe-bottom: env(safe-area-inset-bottom, 0px);
-  --safe-top: env(safe-area-inset-top, 0px);
   font-synthesis: none;
 }
+
+/* NOTE on safe areas: env(safe-area-inset-*) is used DIRECTLY in every calc()
+   below — never stored in a CSS custom property first. iOS Safari/WebKit has a
+   long-standing bug where env() read back through a var() resolves to its 0px
+   fallback, which silently kills all safe-area padding. Inlining env() avoids it. */
 
 * {
   box-sizing: border-box;
   -webkit-tap-highlight-color: transparent;
 }
 
+/* Lock the document to the viewport; scrolling happens inside .app-content so
+   the shell (and its bottom nav) never gets pushed around by iOS toolbars. */
 html,
 body,
 #root {
   margin: 0;
-  /* dvh fills the *visible* viewport on iOS (excludes the URL bar when hidden),
-     so no white/browser-coloured strip is ever exposed below the app. */
-  min-height: 100%;
-  min-height: 100dvh;
+  height: 100%;
+  height: 100dvh;
+}
+
+body {
+  overflow: hidden;
+  overscroll-behavior: none;
 }
 
 /* Dark base so overscroll / rubber-banding never reveals a white page. */
 html {
   background: var(--bg);
-}
-
-body {
-  background:
-    radial-gradient(1200px 600px at 50% -10%, #241433 0%, transparent 60%),
-    linear-gradient(180deg, var(--bg-2), var(--bg) 60%);
-  background-color: var(--bg);
   color: var(--text);
   font-family: "Heebo", "Assistant", "Segoe UI", system-ui, -apple-system, sans-serif;
   font-size: 16px;
   line-height: 1.5;
-  overscroll-behavior-y: none;
+}
+
+/* The painted theatre background lives on #root so it fills the whole shell. */
+#root {
+  background:
+    radial-gradient(1200px 600px at 50% -10%, #241433 0%, transparent 60%),
+    linear-gradient(180deg, var(--bg-2), var(--bg) 60%);
+  background-color: var(--bg);
 }
 
 a {
@@ -86,11 +94,26 @@ h3 {
 
 .app-shell {
   position: relative;
-  min-height: 100%;
-  min-height: 100dvh;
+  /* Fixed to the visible viewport — a real height (not min-height) so the flex
+     children can divide it and the content area can own its own scroll. */
+  height: 100%;
+  height: 100dvh;
   max-width: var(--maxw);
   margin: 0 auto;
-  padding-bottom: calc(var(--nav-h) + var(--safe-bottom) + 16px);
+  display: flex;
+  flex-direction: column;
+  /* Push everything below the notch / Dynamic Island. The curtains stay full
+     bleed behind it; only the content is inset. */
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
+/* The one scrolling region. Everything that isn't the bottom nav lives here. */
+.app-content {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
 }
 
 /* Fixed red curtains framing both sides of the viewport. */
@@ -136,7 +159,7 @@ h3 {
 /* Decorative scalloped valance across the very top, below the notch / island. */
 .valance {
   position: fixed;
-  top: var(--safe-top);
+  top: env(safe-area-inset-top, 0px);
   left: 0;
   right: 0;
   height: 26px;
@@ -149,10 +172,10 @@ h3 {
 }
 
 .page {
-  /* Clear the notch/Dynamic Island + the decorative valance, then a small gap.
-     On non-notched devices --safe-top is 0, trimming the previously excessive
-     top spacing. */
-  padding: calc(var(--safe-top) + 30px) clamp(16px, 6vw, 26px) 8px;
+  /* Safe-area top is applied once on .app-shell, so here we only clear the
+     decorative valance. The bottom space keeps the floating "+" from covering
+     the last item when scrolled to the end. */
+  padding: 30px clamp(16px, 6vw, 26px) 88px;
   position: relative;
   z-index: 1;
 }
@@ -417,7 +440,7 @@ h3 {
 .fab {
   position: fixed;
   inset-inline-end: max(20px, calc((100vw - var(--maxw)) / 2 + 20px));
-  bottom: calc(var(--nav-h) + var(--safe-bottom) + 18px);
+  bottom: calc(var(--nav-h) + env(safe-area-inset-bottom, 0px) + 18px);
   z-index: 8;
   /* Flex centering keeps the "+" glyph perfectly centred on every device. */
   display: flex;
@@ -439,15 +462,12 @@ h3 {
 /* ===== Bottom navigation ===== */
 
 .bottom-nav {
-  position: fixed;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  /* In-flow flex child: it always sits at the real bottom of the shell, above
+     the home indicator, and the dark background continues behind it. */
+  flex: 0 0 auto;
   z-index: 7;
-  height: calc(var(--nav-h) + var(--safe-bottom));
-  padding-bottom: var(--safe-bottom);
-  max-width: var(--maxw);
-  margin: 0 auto;
+  height: calc(var(--nav-h) + env(safe-area-inset-bottom, 0px));
+  padding-bottom: env(safe-area-inset-bottom, 0px);
   display: grid;
   grid-template-columns: repeat(7, 1fr);
   background: linear-gradient(180deg, rgba(27, 22, 38, 0.85), rgba(11, 10, 18, 0.98));
@@ -671,7 +691,7 @@ h3 {
   position: fixed;
   left: 50%;
   transform: translateX(-50%);
-  bottom: calc(var(--nav-h) + var(--safe-bottom) + 26px);
+  bottom: calc(var(--nav-h) + env(safe-area-inset-bottom, 0px) + 26px);
   z-index: 20;
   background: var(--surface-2);
   border: 1px solid var(--gold);
@@ -736,13 +756,15 @@ h3 {
 /* ===== Auth screens ===== */
 
 .auth-wrap {
-  min-height: 100vh;
-  min-height: 100dvh;
+  /* Fills the shell (which already applies the safe-area top) and scrolls if the
+     on-screen keyboard shrinks the viewport. */
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: calc(var(--safe-top) + 24px) clamp(20px, 8vw, 40px)
-    calc(var(--safe-bottom) + 24px);
+  padding: 24px clamp(20px, 8vw, 40px) calc(env(safe-area-inset-bottom, 0px) + 24px);
   position: relative;
   z-index: 1;
 }
