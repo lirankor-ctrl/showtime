@@ -54,6 +54,17 @@ export type ProfileRow = {
   created_at: string;
 }
 
+export type SharedEventRow = {
+  id: string;
+  sender_user_id: string;
+  recipient_user_id: string;
+  original_event_id: string | null;
+  shared_event_data: Record<string, unknown>;
+  poster_image_path: string | null;
+  status: "pending" | "accepted" | "dismissed";
+  created_at: string;
+}
+
 type Insert<T, Optional extends keyof T> = Omit<T, Optional> &
   Partial<Pick<T, Optional>>;
 
@@ -89,9 +100,25 @@ export interface Database {
         Update: Partial<EventPhotoRow>;
         Relationships: [];
       };
+      shared_events: {
+        Row: SharedEventRow;
+        Insert: Insert<SharedEventRow, "id" | "created_at" | "status">;
+        Update: Partial<SharedEventRow>;
+        Relationships: [];
+      };
     };
     Views: Empty;
-    Functions: Empty;
+    Functions: {
+      share_event_with_user: {
+        Args: {
+          p_recipient_email: string;
+          p_event_data: Record<string, unknown>;
+          p_poster_path: string | null;
+          p_original_event_id: string | null;
+        };
+        Returns: string;
+      };
+    };
     Enums: Empty;
     CompositeTypes: Empty;
   };

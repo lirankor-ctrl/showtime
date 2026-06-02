@@ -11,7 +11,14 @@ import { shareEvent } from "../utils/share";
 export default function EventDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { events, subscriptions, posterUrls, saveEvent, removeEvent } = useApp();
+  const {
+    events,
+    subscriptions,
+    posterUrls,
+    saveEvent,
+    removeEvent,
+    shareEvent: shareWithUser,
+  } = useApp();
   const { toast, showToast } = useToast();
 
   const event = useMemo(() => events.find((e) => e.id === id), [events, id]);
@@ -20,6 +27,41 @@ export default function EventDetail() {
   const [review, setReview] = useState("");
   const [highlights, setHighlights] = useState<string[]>([]);
   const [highlightInput, setHighlightInput] = useState("");
+
+  // In-app share-with-user state.
+  const [shareOpen, setShareOpen] = useState(false);
+  const [shareEmail, setShareEmail] = useState("");
+  const [shareBusy, setShareBusy] = useState(false);
+  const [shareMsg, setShareMsg] = useState<{ text: string; ok: boolean } | null>(null);
+
+  async function doShareWithUser() {
+    if (shareBusy) return;
+    const email = shareEmail.trim();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setShareMsg({ text: "יש להזין כתובת אימייל תקינה", ok: false });
+      return;
+    }
+    setShareBusy(true);
+    setShareMsg(null);
+    try {
+      const res = await shareWithUser(email, event!);
+      if (res === "ok") {
+        setShareMsg({ text: "האירוע שותף בהצלחה", ok: true });
+        setShareEmail("");
+      } else if (res === "self") {
+        setShareMsg({ text: "אי אפשר לשתף אירוע עם עצמך", ok: false });
+      } else {
+        setShareMsg({ text: "לא נמצא משתמש עם האימייל הזה", ok: false });
+      }
+    } catch (err) {
+      setShareMsg({
+        text: err instanceof Error ? err.message : "שיתוף האירוע נכשל",
+        ok: false,
+      });
+    } finally {
+      setShareBusy(false);
+    }
+  }
 
   useEffect(() => {
     if (event) {
@@ -140,6 +182,54 @@ export default function EventDetail() {
           🔗 שיתוף
         </button>
       </div>
+
+      {/* Share with another registered SHOW TIME user (in addition to the
+          native text share above). */}
+      <button
+        className="btn gold block"
+        style={{ marginTop: 10 }}
+        onClick={() => {
+          setShareOpen((v) => !v);
+          setShareMsg(null);
+        }}
+        aria-expanded={shareOpen}
+      >
+        👥 שיתוף עם משתמש SHOW TIME
+      </button>
+
+      {shareOpen && (
+        <div className="card fade-in" style={{ marginTop: 10 }}>
+          <div className="field" style={{ marginBottom: 10 }}>
+            <label>אימייל הנמען</label>
+            <input
+              type="email"
+              dir="ltr"
+              inputMode="email"
+              autoComplete="email"
+              placeholder="name@example.com"
+              value={shareEmail}
+              onChange={(e) => setShareEmail(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), doShareWithUser())}
+            />
+          </div>
+          {shareMsg && (
+            <div className={`warn ${shareMsg.ok ? "gold" : ""}`} style={{ marginBottom: 10 }}>
+              {shareMsg.ok ? "✅ " : "⚠️ "}
+              {shareMsg.text}
+            </div>
+          )}
+          <button
+            className="btn primary block"
+            onClick={doShareWithUser}
+            disabled={shareBusy}
+          >
+            {shareBusy ? "משתף…" : "שיתוף האירוע"}
+          </button>
+          <p className="muted" style={{ fontSize: "0.78rem", margin: "10px 0 0" }}>
+            האירוע (כולל הכרזה) יישלח למשתמש הרשום. הוא יחליט אם לשמור אותו לאירועים שלו.
+          </p>
+        </div>
+      )}
 
       {/* Memory archive — available once the event has passed. */}
       {past && (

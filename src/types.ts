@@ -54,6 +54,36 @@ export interface Subscription {
   updatedAt: number;
 }
 
+/** The event payload carried inside a share (snapshot, no ids/subscriptions). */
+export interface SharedEventPayload {
+  title: string;
+  category: CategoryId;
+  date: string;
+  time?: string;
+  venue?: string;
+  city?: string;
+  seats?: string;
+  ticketsCount?: number;
+  ticketPrice?: number;
+  ticketUrl?: string;
+  notes?: string;
+  rating?: number;
+  review?: string;
+  highlights?: string[];
+  senderName: string;
+  senderEmail?: string;
+}
+
+/** A share addressed to the current user. */
+export interface SharedEvent {
+  id: string;
+  senderUserId: string;
+  posterImagePath?: string;
+  status: "pending" | "accepted" | "dismissed";
+  createdAt: number;
+  data: SharedEventPayload;
+}
+
 export interface PhotoRecord {
   id: string;
   eventId: string;

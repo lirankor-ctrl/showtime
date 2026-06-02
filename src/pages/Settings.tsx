@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { Link } from "react-router-dom";
 import AppHeader from "../components/AppHeader";
 import { useApp } from "../store/AppStore";
 import { useAuth } from "../store/AuthStore";
@@ -17,7 +18,7 @@ interface BeforeInstallPromptEvent extends Event {
 }
 
 export default function Settings() {
-  const { events, subscriptions, reload } = useApp();
+  const { events, subscriptions, sharedWithMe, reload } = useApp();
   const { user, displayName, signOut } = useAuth();
   const { toast, showToast } = useToast();
   const fileRef = useRef<HTMLInputElement>(null);
@@ -84,6 +85,16 @@ export default function Settings() {
         <button className="btn danger block" onClick={() => signOut()}>
           🚪 התנתקות
         </button>
+      </div>
+
+      <h2 className="section-title">📨 שיתופים</h2>
+      <div className="card">
+        <p style={{ marginTop: 0 }} className="muted">
+          אירועים שמשתמשי SHOW TIME אחרים שיתפו איתך.
+        </p>
+        <Link to="/shared" className="btn ghost block">
+          אירועים ששותפו איתי{sharedWithMe.length > 0 ? ` (${sharedWithMe.length})` : ""}
+        </Link>
       </div>
 
       <h2 className="section-title">🔔 התראות</h2>

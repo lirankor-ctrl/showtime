@@ -11,6 +11,7 @@ import Subscriptions from "./pages/Subscriptions";
 import SubscriptionForm from "./pages/SubscriptionForm";
 import Memories from "./pages/Memories";
 import Statistics from "./pages/Statistics";
+import SharedWithMe from "./pages/SharedWithMe";
 import Settings from "./pages/Settings";
 import AuthScreen from "./pages/AuthScreen";
 import ResetPassword from "./pages/ResetPassword";
@@ -71,6 +72,7 @@ export default function App() {
               <Route path="/subscriptions/:id/edit" element={<SubscriptionForm />} />
               <Route path="/memories" element={<Memories />} />
               <Route path="/statistics" element={<Statistics />} />
+              <Route path="/shared" element={<SharedWithMe />} />
               <Route path="/settings" element={<Settings />} />
             </Routes>
           </main>

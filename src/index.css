@@ -1110,6 +1110,28 @@ code {
   font-weight: 700;
 }
 
+/* ===== Shared-with-me cards ===== */
+
+.shared-head {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+.shared-poster {
+  flex: 0 0 auto;
+  width: 72px;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid rgba(224, 181, 74, 0.4);
+}
+.shared-poster img {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 3 / 4;
+  object-fit: cover;
+  display: block;
+}
+
 /* ===== Modal (migration prompt) ===== */
 
 .modal-backdrop {

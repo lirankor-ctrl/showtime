@@ -11,7 +11,7 @@ import { todayStr, formatLong, countdownLabel, isToday } from "../utils/dates";
 import { shareEvent } from "../utils/share";
 
 export default function Home() {
-  const { events, posterUrls } = useApp();
+  const { events, posterUrls, sharedWithMe } = useApp();
   const navigate = useNavigate();
   const { toast, showToast } = useToast();
 
@@ -36,6 +36,16 @@ export default function Home() {
   return (
     <div className="page">
       <AppHeader title="SHOW TIME" subtitle="יומן התרבות שלי" />
+
+      {sharedWithMe.length > 0 && (
+        <Link
+          to="/shared"
+          className="warn gold fade-in"
+          style={{ display: "block", marginBottom: 14, fontWeight: 700 }}
+        >
+          📨 שותפו איתך {sharedWithMe.length} אירועים — לצפייה ›
+        </Link>
+      )}
 
       {!hero ? (
         <EmptyState

@@ -7,7 +7,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import type { ShowEvent, Subscription } from "../types";
+import type { ShowEvent, Subscription, SharedEvent } from "../types";
 import {
   deleteEventRow,
   fetchEvents,
@@ -27,7 +27,15 @@ import {
   deleteStorageForEvent,
   uploadEventPoster,
 } from "../data/photos";
-import { getSignedImageUrls } from "../lib/images";
+import { getSignedImageUrl, getSignedImageUrls } from "../lib/images";
+import {
+  buildSharePayload,
+  fetchSharedWithMe,
+  shareEventWithUser,
+  sharedPayloadToEvent,
+  updateShareStatus,
+  type ShareResult,
+} from "../data/shares";
 import { runDailyReminderCheck } from "../utils/notifications";
 import { useAuth } from "./AuthStore";
 
@@ -46,6 +54,8 @@ interface AppContextValue {
   subscriptions: Subscription[];
   /** Signed poster URLs keyed by event id (private bucket, refreshed on load). */
   posterUrls: Record<string, string>;
+  /** Pending events other users shared with me. */
+  sharedWithMe: SharedEvent[];
   loading: boolean;
   error: string | null;
   reload: () => Promise<void>;
@@ -55,17 +65,24 @@ interface AppContextValue {
   setEventPoster: (eventId: string, file: File | null) => Promise<void>;
   saveSubscription: (input: NewSubscriptionInput) => Promise<string>;
   removeSubscription: (id: string) => Promise<void>;
+  /** Share one of my events with a registered user (by email). */
+  shareEvent: (recipientEmail: string, event: ShowEvent) => Promise<ShareResult>;
+  /** Save a shared event into my own events (copies the poster too). */
+  acceptShare: (share: SharedEvent) => Promise<void>;
+  /** Remove a shared event from my "shared with me" list. */
+  dismissShare: (id: string) => Promise<void>;
 }
 
 const AppContext = createContext<AppContextValue | null>(null);
 
 export function AppProvider({ children }: { children: ReactNode }) {
-  const { user } = useAuth();
+  const { user, displayName } = useAuth();
   const userId = user?.id ?? null;
 
   const [events, setEvents] = useState<ShowEvent[]>([]);
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
   const [posterUrls, setPosterUrls] = useState<Record<string, string>>({});
+  const [sharedWithMe, setSharedWithMe] = useState<SharedEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -73,11 +90,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
     if (!userId) {
       setEvents([]);
       setSubscriptions([]);
+      setSharedWithMe([]);
       return;
     }
-    const [e, s] = await Promise.all([fetchEvents(), fetchSubscriptions()]);
+    const [e, s, shares] = await Promise.all([
+      fetchEvents(),
+      fetchSubscriptions(),
+      fetchSharedWithMe(),
+    ]);
     setEvents(e);
     setSubscriptions(s);
+    setSharedWithMe(shares);
   }, [userId]);
 
   // (Re)load whenever the signed-in user changes.
@@ -269,6 +292,57 @@ export function AppProvider({ children }: { children: ReactNode }) {
     [userId, events, reload],
   );
 
+  // ----- In-app sharing between users -----
+
+  const shareEvent = useCallback(
+    async (recipientEmail: string, event: ShowEvent): Promise<ShareResult> => {
+      if (!userId) throw new Error("יש להתחבר כדי לשתף אירועים");
+      const payload = buildSharePayload(
+        event,
+        displayName || user?.email || "",
+        user?.email ?? undefined,
+      );
+      return shareEventWithUser(
+        recipientEmail,
+        payload,
+        event.posterImagePath ?? null,
+        event.id,
+      );
+    },
+    [userId, displayName, user],
+  );
+
+  const acceptShare = useCallback(
+    async (share: SharedEvent) => {
+      // Create the event in my account from the shared snapshot…
+      const newId = await saveEvent(sharedPayloadToEvent(share.data));
+      // …then copy the poster into my own storage so I fully own it.
+      if (share.posterImagePath) {
+        try {
+          const url = await getSignedImageUrl(share.posterImagePath);
+          if (url) {
+            const blob = await (await fetch(url)).blob();
+            const file = new File([blob], "poster.jpg", {
+              type: blob.type || "image/jpeg",
+            });
+            await setEventPoster(newId, file);
+          }
+        } catch (err) {
+          // The event is already saved; a poster copy failure is non-fatal.
+          if (import.meta.env.DEV) console.error("[SHOW TIME] העתקת כרזה נכשלה:", err);
+        }
+      }
+      await updateShareStatus(share.id, "accepted");
+      setSharedWithMe((cur) => cur.filter((s) => s.id !== share.id));
+    },
+    [saveEvent, setEventPoster],
+  );
+
+  const dismissShare = useCallback(async (id: string) => {
+    await updateShareStatus(id, "dismissed");
+    setSharedWithMe((cur) => cur.filter((s) => s.id !== id));
+  }, []);
+
   const saveSubscription = useCallback(
     async (input: NewSubscriptionInput): Promise<string> => {
       if (!userId) throw new Error("יש להתחבר כדי לשמור מנויים");
@@ -305,6 +379,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       events,
       subscriptions,
       posterUrls,
+      sharedWithMe,
       loading,
       error,
       reload,
@@ -313,11 +388,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setEventPoster,
       saveSubscription,
       removeSubscription,
+      shareEvent,
+      acceptShare,
+      dismissShare,
     }),
     [
       events,
       subscriptions,
       posterUrls,
+      sharedWithMe,
       loading,
       error,
       reload,
@@ -326,6 +405,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setEventPoster,
       saveSubscription,
       removeSubscription,
+      shareEvent,
+      acceptShare,
+      dismissShare,
     ],
   );
 
