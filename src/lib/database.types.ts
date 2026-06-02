@@ -19,6 +19,7 @@ export type EventRow = {
   highlights: string[];
   subscription_id: string | null;
   subscription_tickets_used: number;
+  poster_image_path: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -69,7 +70,10 @@ export interface Database {
       };
       events: {
         Row: EventRow;
-        Insert: Insert<EventRow, "id" | "created_at" | "updated_at" | "highlights">;
+        Insert: Insert<
+          EventRow,
+          "id" | "created_at" | "updated_at" | "highlights" | "poster_image_path"
+        >;
         Update: Partial<EventRow>;
         Relationships: [];
       };

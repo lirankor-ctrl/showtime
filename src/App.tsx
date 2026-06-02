@@ -10,6 +10,7 @@ import EventDetail from "./pages/EventDetail";
 import Subscriptions from "./pages/Subscriptions";
 import SubscriptionForm from "./pages/SubscriptionForm";
 import Memories from "./pages/Memories";
+import Statistics from "./pages/Statistics";
 import Settings from "./pages/Settings";
 import AuthScreen from "./pages/AuthScreen";
 import ResetPassword from "./pages/ResetPassword";
@@ -68,6 +69,7 @@ export default function App() {
             <Route path="/subscriptions/new" element={<SubscriptionForm />} />
             <Route path="/subscriptions/:id/edit" element={<SubscriptionForm />} />
             <Route path="/memories" element={<Memories />} />
+            <Route path="/statistics" element={<Statistics />} />
             <Route path="/settings" element={<Settings />} />
           </Routes>
           <BottomNav />

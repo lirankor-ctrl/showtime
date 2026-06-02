@@ -26,6 +26,8 @@ export interface ShowEvent {
   ticketUrl?: string;
   /** Free notes written before the event (planning). */
   notes?: string;
+  /** Storage path of the event's poster/cover image (private bucket). */
+  posterImagePath?: string;
   // Subscription usage
   subscriptionId?: string;
   subscriptionTicketsUsed?: number;

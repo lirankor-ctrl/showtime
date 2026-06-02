@@ -11,7 +11,7 @@ import { shareEvent } from "../utils/share";
 export default function EventDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { events, subscriptions, saveEvent, removeEvent } = useApp();
+  const { events, subscriptions, posterUrls, saveEvent, removeEvent } = useApp();
   const { toast, showToast } = useToast();
 
   const event = useMemo(() => events.find((e) => e.id === id), [events, id]);
@@ -102,6 +102,12 @@ export default function EventDetail() {
         </span>
       </div>
       <h1 style={{ fontSize: "1.6rem", marginBottom: 14 }}>{event.title}</h1>
+
+      {event.posterImagePath && posterUrls[event.id] && (
+        <div className="detail-poster">
+          <img src={posterUrls[event.id]} alt={`כרזה — ${event.title}`} />
+        </div>
+      )}
 
       <div className="card">
         {details.map(([label, value]) =>

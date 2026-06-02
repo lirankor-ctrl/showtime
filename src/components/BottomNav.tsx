@@ -6,6 +6,7 @@ const TABS = [
   { to: "/events", icon: "🎟️", label: "אירועים" },
   { to: "/subscriptions", icon: "🎫", label: "מנויים" },
   { to: "/memories", icon: "📖", label: "זיכרונות" },
+  { to: "/statistics", icon: "📊", label: "סטטיסטיקה" },
   { to: "/settings", icon: "⚙️", label: "הגדרות" },
 ];
 

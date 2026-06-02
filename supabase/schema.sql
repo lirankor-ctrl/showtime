@@ -48,9 +48,15 @@ create table if not exists public.events (
   highlights text[] not null default '{}',
   subscription_id uuid references public.subscriptions (id) on delete set null,
   subscription_tickets_used int not null default 0,
+  poster_image_path text,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+
+-- Poster/cover image per event (added beyond the original spec). Idempotent so
+-- existing databases pick it up on a re-run.
+alter table public.events
+  add column if not exists poster_image_path text;
 
 create table if not exists public.event_photos (
   id uuid primary key default gen_random_uuid(),

@@ -46,3 +46,15 @@ export async function deleteEventRow(id: string): Promise<void> {
   const { error } = await supabase.from("events").delete().eq("id", id);
   if (error) throw dbError(error, "מחיקת האירוע נכשלה");
 }
+
+/** Set (or clear) only the poster path on an event row. */
+export async function setPosterPath(
+  id: string,
+  path: string | null,
+): Promise<void> {
+  const { error } = await supabase
+    .from("events")
+    .update({ poster_image_path: path })
+    .eq("id", id);
+  if (error) throw dbError(error, "עדכון הכרזה נכשל");
+}

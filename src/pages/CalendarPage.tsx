@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import { useApp } from "../store/AppStore";
 import AppHeader from "../components/AppHeader";
 import EventCard from "../components/EventCard";
@@ -122,6 +123,10 @@ export default function CalendarPage() {
       ) : (
         selectedEvents.map((e) => <EventCard key={e.id} event={e} />)
       )}
+
+      <Link to="/events/new" className="fab" aria-label="הוספת אירוע">
+        +
+      </Link>
     </div>
   );
 }

@@ -25,6 +25,7 @@ export function eventFromRow(r: EventRow): ShowEvent {
     ticketPrice: r.ticket_price ?? undefined,
     ticketUrl: r.ticket_url ?? undefined,
     notes: r.pre_notes ?? undefined,
+    posterImagePath: r.poster_image_path ?? undefined,
     review: r.post_notes ?? undefined,
     rating: r.rating ?? undefined,
     highlights: r.highlights?.length ? r.highlights : undefined,
@@ -35,10 +36,17 @@ export function eventFromRow(r: EventRow): ShowEvent {
   };
 }
 
-/** Domain event → row columns for insert/update (user_id added by caller). */
+/**
+ * Domain event → row columns for insert/update (user_id added by caller).
+ * `poster_image_path` is intentionally excluded: posters are managed only via
+ * the dedicated setPosterPath path, so a regular event save never clobbers them.
+ */
 export function eventToRow(
   e: Omit<ShowEvent, "id" | "createdAt" | "updatedAt">,
-): Omit<EventRow, "id" | "user_id" | "created_at" | "updated_at"> {
+): Omit<
+  EventRow,
+  "id" | "user_id" | "created_at" | "updated_at" | "poster_image_path"
+> {
   return {
     title: e.title,
     category: e.category,

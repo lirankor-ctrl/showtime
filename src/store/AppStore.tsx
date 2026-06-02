@@ -12,6 +12,7 @@ import {
   deleteEventRow,
   fetchEvents,
   insertEvent,
+  setPosterPath,
   updateEvent,
 } from "../data/events";
 import {
@@ -21,7 +22,12 @@ import {
   setRemainingTickets,
   updateSubscription,
 } from "../data/subscriptions";
-import { deleteStorageForEvent } from "../data/photos";
+import {
+  deleteEventPoster,
+  deleteStorageForEvent,
+  posterSignedUrls,
+  uploadEventPoster,
+} from "../data/photos";
 import { runDailyReminderCheck } from "../utils/notifications";
 import { useAuth } from "./AuthStore";
 
@@ -38,11 +44,15 @@ export interface NewSubscriptionInput
 interface AppContextValue {
   events: ShowEvent[];
   subscriptions: Subscription[];
+  /** Signed poster URLs keyed by event id (private bucket, refreshed on load). */
+  posterUrls: Record<string, string>;
   loading: boolean;
   error: string | null;
   reload: () => Promise<void>;
   saveEvent: (input: NewEventInput) => Promise<string>;
   removeEvent: (id: string) => Promise<void>;
+  /** Upload (file) or remove (null) an event's poster image. */
+  setEventPoster: (eventId: string, file: File | null) => Promise<void>;
   saveSubscription: (input: NewSubscriptionInput) => Promise<string>;
   removeSubscription: (id: string) => Promise<void>;
 }
@@ -55,6 +65,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const [events, setEvents] = useState<ShowEvent[]>([]);
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
+  const [posterUrls, setPosterUrls] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -94,6 +105,28 @@ export function AppProvider({ children }: { children: ReactNode }) {
       runDailyReminderCheck(events).catch(() => {});
     }
   }, [loading, events]);
+
+  // Refresh signed poster URLs whenever the set of poster paths changes.
+  useEffect(() => {
+    const entries = events
+      .filter((e) => e.posterImagePath)
+      .map((e) => [e.id, e.posterImagePath!] as [string, string]);
+    if (entries.length === 0) {
+      setPosterUrls({});
+      return;
+    }
+    let active = true;
+    posterSignedUrls(entries)
+      .then((map) => {
+        if (active) setPosterUrls(map);
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+    // Re-run only when the poster paths themselves change.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [events.map((e) => `${e.id}:${e.posterImagePath ?? ""}`).join("|")]);
 
   // Keep the in-memory list in the same order the server returns (date asc,
   // then time) so optimistic inserts land in the right place before a reload.
@@ -184,12 +217,42 @@ export function AppProvider({ children }: { children: ReactNode }) {
         const remaining = remainingOf(prev.subscriptionId) + prev.subscriptionTicketsUsed;
         await setRemainingTickets(prev.subscriptionId, remaining);
       }
+      if (prev?.posterImagePath) {
+        await deleteEventPoster(prev.posterImagePath).catch(() => {});
+      }
       await deleteStorageForEvent(id); // DB photo rows cascade with the event
       await deleteEventRow(id);
       setEvents((cur) => cur.filter((e) => e.id !== id));
       reload().catch(() => {});
     },
     [events, remainingOf, reload],
+  );
+
+  const setEventPoster = useCallback(
+    async (eventId: string, file: File | null) => {
+      if (!userId) throw new Error("יש להתחבר כדי לעדכן את הכרזה");
+      const prev = events.find((e) => e.id === eventId);
+
+      if (file) {
+        const path = await uploadEventPoster(userId, eventId, file);
+        await setPosterPath(eventId, path);
+        setEvents((cur) =>
+          cur.map((e) => (e.id === eventId ? { ...e, posterImagePath: path } : e)),
+        );
+      } else {
+        if (prev?.posterImagePath) {
+          await deleteEventPoster(prev.posterImagePath).catch(() => {});
+        }
+        await setPosterPath(eventId, null);
+        setEvents((cur) =>
+          cur.map((e) =>
+            e.id === eventId ? { ...e, posterImagePath: undefined } : e,
+          ),
+        );
+      }
+      reload().catch(() => {});
+    },
+    [userId, events, reload],
   );
 
   const saveSubscription = useCallback(
@@ -227,15 +290,29 @@ export function AppProvider({ children }: { children: ReactNode }) {
     () => ({
       events,
       subscriptions,
+      posterUrls,
       loading,
       error,
       reload,
       saveEvent,
       removeEvent,
+      setEventPoster,
       saveSubscription,
       removeSubscription,
     }),
-    [events, subscriptions, loading, error, reload, saveEvent, removeEvent, saveSubscription, removeSubscription],
+    [
+      events,
+      subscriptions,
+      posterUrls,
+      loading,
+      error,
+      reload,
+      saveEvent,
+      removeEvent,
+      setEventPoster,
+      saveSubscription,
+      removeSubscription,
+    ],
   );
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

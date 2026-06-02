@@ -1,10 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useApp, type NewEventInput } from "../store/AppStore";
 import { CATEGORIES } from "../utils/categories";
 import { todayStr } from "../utils/dates";
 import RatingStars from "../components/RatingStars";
 import PhotoGallery from "../components/PhotoGallery";
+import PosterField from "../components/PosterField";
 import type { CategoryId } from "../types";
 
 // Quarter-hour options (00/15/30/45) covering a full day, offered as quick
@@ -35,11 +36,17 @@ export default function EventForm() {
   const [form, setForm] = useState<NewEventInput>(empty);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const loadedRef = useRef(false);
 
+  // Load the existing event once it's available — but only once, so unsaved
+  // edits aren't wiped when the store reloads (e.g. after a poster change).
   useEffect(() => {
-    if (id) {
+    if (id && !loadedRef.current) {
       const found = events.find((e) => e.id === id);
-      if (found) setForm({ ...found });
+      if (found) {
+        setForm({ ...found });
+        loadedRef.current = true;
+      }
     }
   }, [id, events]);
 
@@ -111,6 +118,17 @@ export default function EventForm() {
               </option>
             ))}
           </select>
+        </div>
+
+        <div className="field">
+          <label>תמונת כרזה לאירוע</label>
+          {editing ? (
+            <PosterField eventId={id!} />
+          ) : (
+            <p className="muted" style={{ fontSize: "0.82rem", margin: 0 }}>
+              ניתן להוסיף כרזה לאחר שמירת האירוע, מתוך עמוד עריכת האירוע.
+            </p>
+          )}
         </div>
 
         <div className="field-row">

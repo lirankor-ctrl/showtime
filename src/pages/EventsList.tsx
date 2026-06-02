@@ -1,26 +1,60 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useApp } from "../store/AppStore";
+import { useAuth } from "../store/AuthStore";
 import AppHeader from "../components/AppHeader";
 import EventCard from "../components/EventCard";
 import EmptyState from "../components/EmptyState";
 import { CATEGORIES } from "../utils/categories";
 import { isPast } from "../utils/dates";
-import type { CategoryId } from "../types";
+import type { CategoryId, ShowEvent } from "../types";
 
 type When = "all" | "upcoming" | "past";
+type Sort = "soon" | "recent" | "rating";
+
+interface StoredFilters {
+  query?: string;
+  cat?: CategoryId | "all";
+  when?: When;
+  minRating?: number;
+  subId?: string;
+  sort?: Sort;
+}
 
 export default function EventsList() {
   const { events, subscriptions } = useApp();
-  const [query, setQuery] = useState("");
-  const [cat, setCat] = useState<CategoryId | "all">("all");
-  const [when, setWhen] = useState<When>("all");
-  const [minRating, setMinRating] = useState(0);
-  const [subId, setSubId] = useState("all");
+  const { user } = useAuth();
+
+  // Filters are remembered locally, per authenticated user.
+  const storageKey = `show-time:events-filters:${user?.id ?? "anon"}`;
+  const stored = useMemo<StoredFilters>(() => {
+    try {
+      return JSON.parse(localStorage.getItem(storageKey) || "{}");
+    } catch {
+      return {};
+    }
+  }, [storageKey]);
+
+  const [query, setQuery] = useState(stored.query ?? "");
+  const [cat, setCat] = useState<CategoryId | "all">(stored.cat ?? "all");
+  const [when, setWhen] = useState<When>(stored.when ?? "all");
+  const [minRating, setMinRating] = useState(stored.minRating ?? 0);
+  const [subId, setSubId] = useState(stored.subId ?? "all");
+  const [sort, setSort] = useState<Sort>(stored.sort ?? "soon");
+
+  // Persist whenever any filter changes (explicit user actions only).
+  useEffect(() => {
+    const data: StoredFilters = { query, cat, when, minRating, subId, sort };
+    try {
+      localStorage.setItem(storageKey, JSON.stringify(data));
+    } catch {
+      /* storage may be unavailable (private mode) — non-fatal */
+    }
+  }, [storageKey, query, cat, when, minRating, subId, sort]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return events.filter((e) => {
+    const list = events.filter((e) => {
       if (cat !== "all" && e.category !== cat) return false;
       if (when === "upcoming" && isPast(e.date)) return false;
       if (when === "past" && !isPast(e.date)) return false;
@@ -35,7 +69,16 @@ export default function EventsList() {
       }
       return true;
     });
-  }, [events, query, cat, when, minRating, subId]);
+
+    const byDate = (a: ShowEvent, b: ShowEvent) =>
+      a.date.localeCompare(b.date) || (a.time ?? "").localeCompare(b.time ?? "");
+
+    return [...list].sort((a, b) => {
+      if (sort === "recent") return -byDate(a, b);
+      if (sort === "rating") return (b.rating ?? 0) - (a.rating ?? 0) || byDate(a, b);
+      return byDate(a, b); // "soon"
+    });
+  }, [events, query, cat, when, minRating, subId, sort]);
 
   return (
     <div className="page">
@@ -98,6 +141,15 @@ export default function EventsList() {
             ))}
           </select>
         </div>
+      </div>
+
+      <div className="field">
+        <label>מיון</label>
+        <select value={sort} onChange={(e) => setSort(e.target.value as Sort)}>
+          <option value="soon">לפי תאריך (קרוב → רחוק)</option>
+          <option value="recent">לפי תאריך (חדש → ישן)</option>
+          <option value="rating">לפי דירוג (גבוה → נמוך)</option>
+        </select>
       </div>
 
       {filtered.length === 0 ? (

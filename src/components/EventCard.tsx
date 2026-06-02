@@ -2,12 +2,15 @@ import { useNavigate } from "react-router-dom";
 import type { ShowEvent } from "../types";
 import { category } from "../utils/categories";
 import { formatShort, countdownLabel, isPast } from "../utils/dates";
+import { useApp } from "../store/AppStore";
 import RatingStars from "./RatingStars";
 
 export default function EventCard({ event }: { event: ShowEvent }) {
   const navigate = useNavigate();
+  const { posterUrls } = useApp();
   const c = category(event.category);
   const past = isPast(event.date);
+  const poster = event.posterImagePath ? posterUrls[event.id] : "";
 
   return (
     <button className="event-card fade-in" onClick={() => navigate(`/events/${event.id}`)}>
@@ -32,6 +35,11 @@ export default function EventCard({ event }: { event: ShowEvent }) {
           </span>
         )}
       </span>
+      {poster && (
+        <span className="poster-thumb" aria-hidden>
+          <img src={poster} alt="" loading="lazy" />
+        </span>
+      )}
     </button>
   );
 }
