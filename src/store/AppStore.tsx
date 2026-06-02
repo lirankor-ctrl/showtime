@@ -25,9 +25,9 @@ import {
 import {
   deleteEventPoster,
   deleteStorageForEvent,
-  posterSignedUrls,
   uploadEventPoster,
 } from "../data/photos";
+import { getSignedImageUrls } from "../lib/images";
 import { runDailyReminderCheck } from "../utils/notifications";
 import { useAuth } from "./AuthStore";
 
@@ -116,11 +116,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
       return;
     }
     let active = true;
-    posterSignedUrls(entries)
+    getSignedImageUrls(entries)
       .then((map) => {
         if (active) setPosterUrls(map);
+        if (import.meta.env.DEV) {
+          console.debug("[SHOW TIME] poster URLs refreshed:", map);
+        }
       })
-      .catch(() => {});
+      .catch((err) => {
+        if (import.meta.env.DEV) console.error("[SHOW TIME] poster URL error:", err);
+      });
     return () => {
       active = false;
     };
@@ -235,7 +240,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
       if (file) {
         const path = await uploadEventPoster(userId, eventId, file);
-        await setPosterPath(eventId, path);
+        if (import.meta.env.DEV) console.debug("[SHOW TIME] poster uploaded:", path);
+        try {
+          const row = await setPosterPath(eventId, path);
+          if (import.meta.env.DEV) console.debug("[SHOW TIME] event poster saved:", row);
+        } catch (err) {
+          // Surface the real cause: upload succeeded but the DB update failed
+          // (e.g. the poster_image_path column is missing — run schema.sql).
+          console.error("[SHOW TIME] שמירת נתיב הכרזה נכשלה:", err);
+          throw err;
+        }
         setEvents((cur) =>
           cur.map((e) => (e.id === eventId ? { ...e, posterImagePath: path } : e)),
         );

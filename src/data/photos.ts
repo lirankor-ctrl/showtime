@@ -115,32 +115,6 @@ export async function deleteEventPoster(path: string): Promise<void> {
   await supabase.storage.from(PHOTO_BUCKET).remove([path]);
 }
 
-/** Fresh signed URL for a single poster path (private bucket). */
-export async function posterSignedUrl(path: string): Promise<string> {
-  const { data } = await supabase.storage
-    .from(PHOTO_BUCKET)
-    .createSignedUrl(path, SIGNED_TTL);
-  return data?.signedUrl ?? "";
-}
-
-/** Batch signed URLs for posters, keyed by event id. */
-export async function posterSignedUrls(
-  entries: Array<[eventId: string, path: string]>,
-): Promise<Record<string, string>> {
-  if (entries.length === 0) return {};
-  const paths = entries.map(([, p]) => p);
-  const { data } = await supabase.storage
-    .from(PHOTO_BUCKET)
-    .createSignedUrls(paths, SIGNED_TTL);
-  const byPath = new Map((data ?? []).map((d) => [d.path, d.signedUrl]));
-  const out: Record<string, string> = {};
-  for (const [eventId, path] of entries) {
-    const url = byPath.get(path);
-    if (url) out[eventId] = url;
-  }
-  return out;
-}
-
 /** All photo event_ids for the signed-in user — powers the statistics counts. */
 export async function fetchUserPhotoEventIds(): Promise<string[]> {
   const { data, error } = await supabase.from("event_photos").select("event_id");
