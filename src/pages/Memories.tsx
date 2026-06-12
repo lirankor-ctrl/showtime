@@ -4,14 +4,14 @@ import { useApp } from "../store/AppStore";
 import AppHeader from "../components/AppHeader";
 import EventCard from "../components/EventCard";
 import EmptyState from "../components/EmptyState";
-import { isPast } from "../utils/dates";
+import { isMemory } from "../utils/eventStatus";
 
 export default function Memories() {
   const { events } = useApp();
 
   const { past, avg } = useMemo(() => {
     // Most recent first — a scrapbook reads newest-to-oldest.
-    const p = events.filter((e) => isPast(e.date)).reverse();
+    const p = events.filter(isMemory).reverse();
     const rated = p.filter((e) => e.rating);
     const a = rated.length
       ? (rated.reduce((s, e) => s + (e.rating ?? 0), 0) / rated.length).toFixed(1)

@@ -65,3 +65,23 @@ export async function setPosterPath(
   if (error) throw dbError(error, "עדכון הכרזה נכשל");
   return data;
 }
+
+/**
+ * Set only the `archived` flag on an event row. Kept separate from the regular
+ * save (mirroring setPosterPath) so normal event CRUD never depends on this
+ * column existing. select().single() surfaces a missing column / 0-row update
+ * as an error instead of silently succeeding.
+ */
+export async function setArchived(
+  id: string,
+  archived: boolean,
+): Promise<{ id: string; archived: boolean }> {
+  const { data, error } = await supabase
+    .from("events")
+    .update({ archived })
+    .eq("id", id)
+    .select("id, archived")
+    .single();
+  if (error) throw dbError(error, "העברת האירוע לארכיון נכשלה");
+  return data;
+}

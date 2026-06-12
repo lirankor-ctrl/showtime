@@ -1,7 +1,8 @@
 import { useNavigate } from "react-router-dom";
 import type { ShowEvent } from "../types";
 import { category } from "../utils/categories";
-import { formatShort, countdownLabel, isPast } from "../utils/dates";
+import { formatShort, countdownLabel } from "../utils/dates";
+import { isMemory } from "../utils/eventStatus";
 import { useApp } from "../store/AppStore";
 import RatingStars from "./RatingStars";
 
@@ -9,7 +10,7 @@ export default function EventCard({ event }: { event: ShowEvent }) {
   const navigate = useNavigate();
   const { posterUrls } = useApp();
   const c = category(event.category);
-  const past = isPast(event.date);
+  const past = isMemory(event);
   const poster = event.posterImagePath ? posterUrls[event.id] : "";
 
   return (

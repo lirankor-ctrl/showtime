@@ -36,6 +36,8 @@ export interface ShowEvent {
   /** Post-event review / memories (maps to events.post_notes). */
   review?: string;
   highlights?: string[];
+  /** True once explicitly completed/archived via the post-event flow. */
+  archived?: boolean;
   createdAt: number;
   updatedAt: number;
 }

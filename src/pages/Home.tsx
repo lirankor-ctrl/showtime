@@ -7,7 +7,8 @@ import EmptyState from "../components/EmptyState";
 import CategoryBadge from "../components/CategoryBadge";
 import EventCountdown from "../components/EventCountdown";
 import { useToast } from "../components/useToast";
-import { todayStr, formatLong, countdownLabel, isToday } from "../utils/dates";
+import { formatLong, countdownLabel, isToday } from "../utils/dates";
+import { isUpcoming, isMemory, canComplete } from "../utils/eventStatus";
 import { shareEvent } from "../utils/share";
 
 export default function Home() {
@@ -16,9 +17,8 @@ export default function Home() {
   const { toast, showToast } = useToast();
 
   const { hero, upcoming, pastCount } = useMemo(() => {
-    const today = todayStr();
-    const future = events.filter((e) => e.date >= today);
-    const past = events.filter((e) => e.date < today);
+    const future = events.filter(isUpcoming);
+    const past = events.filter(isMemory);
     return {
       hero: future[0],
       upcoming: future.slice(1),
@@ -135,6 +135,16 @@ export default function Home() {
               )}
             </div>
           </div>
+
+          {canComplete(hero) && (
+            <Link
+              to={`/events/${hero.id}/complete`}
+              className="btn gold block complete-cta fade-in"
+              style={{ marginTop: 14 }}
+            >
+              🎬 האירוע הסתיים — לדירוג ולארכיון
+            </Link>
+          )}
 
           {upcoming.length > 0 && (
             <>

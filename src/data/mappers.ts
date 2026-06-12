@@ -31,6 +31,7 @@ export function eventFromRow(r: EventRow): ShowEvent {
     highlights: r.highlights?.length ? r.highlights : undefined,
     subscriptionId: r.subscription_id ?? undefined,
     subscriptionTicketsUsed: r.subscription_tickets_used || undefined,
+    archived: r.archived || undefined,
     createdAt: ts(r.created_at),
     updatedAt: ts(r.updated_at),
   };
@@ -38,14 +39,16 @@ export function eventFromRow(r: EventRow): ShowEvent {
 
 /**
  * Domain event → row columns for insert/update (user_id added by caller).
- * `poster_image_path` is intentionally excluded: posters are managed only via
- * the dedicated setPosterPath path, so a regular event save never clobbers them.
+ * `poster_image_path` and `archived` are intentionally excluded: both are
+ * managed only via their dedicated paths (setPosterPath / setArchived), so a
+ * regular event save never clobbers them — and existing event CRUD keeps
+ * working even on a database that hasn't run the latest migration yet.
  */
 export function eventToRow(
   e: Omit<ShowEvent, "id" | "createdAt" | "updatedAt">,
 ): Omit<
   EventRow,
-  "id" | "user_id" | "created_at" | "updated_at" | "poster_image_path"
+  "id" | "user_id" | "created_at" | "updated_at" | "poster_image_path" | "archived"
 > {
   return {
     title: e.title,

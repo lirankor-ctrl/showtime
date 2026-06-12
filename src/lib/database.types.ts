@@ -20,6 +20,7 @@ export type EventRow = {
   subscription_id: string | null;
   subscription_tickets_used: number;
   poster_image_path: string | null;
+  archived: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -54,6 +55,17 @@ export type ProfileRow = {
   created_at: string;
 }
 
+export type ExternalLinkRow = {
+  id: string;
+  category: string;
+  title: string;
+  description: string | null;
+  url: string;
+  active: boolean;
+  sort_order: number;
+  created_at: string;
+}
+
 export type SharedEventRow = {
   id: string;
   sender_user_id: string;
@@ -83,7 +95,12 @@ export interface Database {
         Row: EventRow;
         Insert: Insert<
           EventRow,
-          "id" | "created_at" | "updated_at" | "highlights" | "poster_image_path"
+          | "id"
+          | "created_at"
+          | "updated_at"
+          | "highlights"
+          | "poster_image_path"
+          | "archived"
         >;
         Update: Partial<EventRow>;
         Relationships: [];
@@ -104,6 +121,15 @@ export interface Database {
         Row: SharedEventRow;
         Insert: Insert<SharedEventRow, "id" | "created_at" | "status">;
         Update: Partial<SharedEventRow>;
+        Relationships: [];
+      };
+      external_links: {
+        Row: ExternalLinkRow;
+        Insert: Insert<
+          ExternalLinkRow,
+          "id" | "created_at" | "active" | "sort_order" | "description"
+        >;
+        Update: Partial<ExternalLinkRow>;
         Relationships: [];
       };
     };

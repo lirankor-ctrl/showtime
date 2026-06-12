@@ -5,7 +5,8 @@ import CategoryBadge from "../components/CategoryBadge";
 import RatingStars from "../components/RatingStars";
 import PhotoGallery from "../components/PhotoGallery";
 import { useToast } from "../components/useToast";
-import { formatDateTime, isPast, countdownLabel } from "../utils/dates";
+import { formatDateTime, countdownLabel } from "../utils/dates";
+import { isMemory, canComplete } from "../utils/eventStatus";
 import { shareEvent } from "../utils/share";
 
 export default function EventDetail() {
@@ -82,7 +83,8 @@ export default function EventDetail() {
     );
   }
 
-  const past = isPast(event.date);
+  const past = isMemory(event);
+  const showCompleteCta = canComplete(event);
   const sub = subscriptions.find((s) => s.id === event.subscriptionId);
 
   async function onShare() {
@@ -149,6 +151,16 @@ export default function EventDetail() {
         <div className="detail-poster">
           <img src={posterUrls[event.id]} alt={`כרזה — ${event.title}`} />
         </div>
+      )}
+
+      {showCompleteCta && (
+        <Link
+          to={`/events/${event.id}/complete`}
+          className="btn gold block complete-cta fade-in"
+          style={{ marginBottom: 14 }}
+        >
+          🎬 האירוע הסתיים — לדירוג ולארכיון
+        </Link>
       )}
 
       <div className="card">

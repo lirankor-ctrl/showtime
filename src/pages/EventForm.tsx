@@ -54,7 +54,8 @@ export default function EventForm() {
     setForm((f) => ({ ...f, [key]: value }));
   }
 
-  const isPastEvent = form.date < todayStr();
+  // Memory fields appear for past dates or events already moved to the archive.
+  const isPastEvent = form.date < todayStr() || Boolean(form.archived);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();

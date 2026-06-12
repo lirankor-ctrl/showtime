@@ -7,6 +7,9 @@ import CalendarPage from "./pages/CalendarPage";
 import EventsList from "./pages/EventsList";
 import EventForm from "./pages/EventForm";
 import EventDetail from "./pages/EventDetail";
+import EventComplete from "./pages/EventComplete";
+import Discover from "./pages/Discover";
+import DiscoverCategory from "./pages/DiscoverCategory";
 import Subscriptions from "./pages/Subscriptions";
 import SubscriptionForm from "./pages/SubscriptionForm";
 import Memories from "./pages/Memories";
@@ -67,6 +70,9 @@ export default function App() {
               <Route path="/events/new" element={<EventForm />} />
               <Route path="/events/:id" element={<EventDetail />} />
               <Route path="/events/:id/edit" element={<EventForm />} />
+              <Route path="/events/:id/complete" element={<EventComplete />} />
+              <Route path="/discover" element={<Discover />} />
+              <Route path="/discover/:category" element={<DiscoverCategory />} />
               <Route path="/subscriptions" element={<Subscriptions />} />
               <Route path="/subscriptions/new" element={<SubscriptionForm />} />
               <Route path="/subscriptions/:id/edit" element={<SubscriptionForm />} />

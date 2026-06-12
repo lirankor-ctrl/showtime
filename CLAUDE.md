@@ -45,7 +45,7 @@ The app's camelCase domain types (`ShowEvent`, `Subscription` in `src/types.ts`)
 
 1. **Subscription ticket accounting** lives in `AppStore.saveEvent`/`removeEvent`. It frees the previous version's `subscription_tickets_used` then re-applies the new usage, **validates availability before writing** (throws a Hebrew "אין מספיק כרטיסים…" error the forms display), and updates `remaining_tickets` via `setRemainingTickets`. It is client-side (single-user, RLS-protected) — if you add an event write path, route it through the store or replicate this, or counts drift.
 
-2. **Before/after-event split** is driven by `utils/dates.ts#isPast`: future events show planning fields; past events unlock the memory fields (rating, review, highlights, photos). Home hero = soonest future event; Memories = past, newest-first.
+2. **Before/after-event split** is driven by `utils/eventStatus.ts` (`isUpcoming`/`isMemory`/`canComplete`), which combines `utils/dates.ts#isPast` with the explicit `events.archived` flag: an event becomes a memory once its date passes **or** it is archived via the post-event completion flow (`/events/:id/complete`). Future events show planning fields; memories unlock rating/review/highlights/photos. Home hero = soonest upcoming event; Memories = memories, newest-first. Like `poster_image_path`, `archived` is excluded from `eventToRow` and persisted via a dedicated `setArchived` path, so normal event CRUD never depends on the column and keeps working before the migration runs.
 
 ### Photos
 

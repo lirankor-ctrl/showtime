@@ -1,7 +1,8 @@
 // Derive cultural-activity insights from the user's events & subscriptions.
 import type { ShowEvent, Subscription } from "../types";
 import { CATEGORIES, category } from "./categories";
-import { isPast, todayStr } from "./dates";
+import { todayStr } from "./dates";
+import { isMemory } from "./eventStatus";
 
 export interface CategoryStat {
   id: string;
@@ -80,7 +81,7 @@ export function computeStats(
   const year = today.slice(0, 4);
   const ym = today.slice(0, 7);
 
-  const attended = events.filter((e) => isPast(e.date));
+  const attended = events.filter(isMemory);
   const rated = events.filter((e) => e.rating);
 
   const avgRating =

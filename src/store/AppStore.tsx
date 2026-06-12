@@ -12,6 +12,7 @@ import {
   deleteEventRow,
   fetchEvents,
   insertEvent,
+  setArchived,
   setPosterPath,
   updateEvent,
 } from "../data/events";
@@ -216,12 +217,22 @@ export function AppProvider({ children }: { children: ReactNode }) {
         }
       }
 
+      // Persist the archive flag only when it changes, through its dedicated
+      // path (see setArchived). This keeps normal event CRUD from ever touching
+      // the column, so it works even before the migration runs.
+      let savedEvent = saved;
+      const targetArchived = Boolean(input.archived);
+      if (targetArchived !== Boolean(prev?.archived)) {
+        await setArchived(saved.id, targetArchived);
+        savedEvent = { ...saved, archived: targetArchived || undefined };
+      }
+
       // The write has already succeeded — update local state immediately so a
       // transient refresh failure can never report success as failure (which
       // would tempt the user to retry and create a duplicate). The reload then
       // reconciles in the background.
       setEvents((cur) =>
-        sortEvents([...cur.filter((e) => e.id !== saved.id), saved]),
+        sortEvents([...cur.filter((e) => e.id !== savedEvent.id), savedEvent]),
       );
       if (counterUpdates.length) {
         setSubscriptions((cur) =>

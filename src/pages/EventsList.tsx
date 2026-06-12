@@ -6,7 +6,7 @@ import AppHeader from "../components/AppHeader";
 import EventCard from "../components/EventCard";
 import EmptyState from "../components/EmptyState";
 import { CATEGORIES } from "../utils/categories";
-import { isPast } from "../utils/dates";
+import { isMemory } from "../utils/eventStatus";
 import type { CategoryId, ShowEvent } from "../types";
 
 type When = "all" | "upcoming" | "past";
@@ -56,8 +56,8 @@ export default function EventsList() {
     const q = query.trim().toLowerCase();
     const list = events.filter((e) => {
       if (cat !== "all" && e.category !== cat) return false;
-      if (when === "upcoming" && isPast(e.date)) return false;
-      if (when === "past" && !isPast(e.date)) return false;
+      if (when === "upcoming" && isMemory(e)) return false;
+      if (when === "past" && !isMemory(e)) return false;
       if (minRating > 0 && (e.rating ?? 0) < minRating) return false;
       if (subId !== "all" && e.subscriptionId !== subId) return false;
       if (q) {

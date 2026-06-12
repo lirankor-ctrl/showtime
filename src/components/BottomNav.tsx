@@ -1,24 +1,35 @@
+import { useState } from "react";
 import { NavLink } from "react-router-dom";
+import BottomSheetMenu from "./BottomSheetMenu";
 
-const TABS = [
-  { to: "/", icon: "🎭", label: "בית", end: true },
-  { to: "/calendar", icon: "📅", label: "לוח שנה" },
-  { to: "/events", icon: "🎟️", label: "אירועים" },
-  { to: "/subscriptions", icon: "🎫", label: "מנויים" },
-  { to: "/memories", icon: "📖", label: "זיכרונות" },
-  { to: "/statistics", icon: "📊", label: "סטטיסטיקה" },
-  { to: "/settings", icon: "⚙️", label: "הגדרות" },
-];
-
+// Primary navigation: 3 destinations only. Home (unchanged), event discovery
+// (globe), and a menu that opens the bottom-sheet with everything else.
 export default function BottomNav() {
+  const [menuOpen, setMenuOpen] = useState(false);
+
   return (
-    <nav className="bottom-nav">
-      {TABS.map((t) => (
-        <NavLink key={t.to} to={t.to} end={t.end}>
-          <span className="ico">{t.icon}</span>
-          <span>{t.label}</span>
+    <>
+      <nav className="bottom-nav">
+        <NavLink to="/" end>
+          <span className="ico">🎭</span>
+          <span>בית</span>
         </NavLink>
-      ))}
-    </nav>
+        <NavLink to="/discover">
+          <span className="ico">🌐</span>
+          <span>גילוי</span>
+        </NavLink>
+        <button
+          type="button"
+          className={`nav-menu-btn ${menuOpen ? "active" : ""}`}
+          onClick={() => setMenuOpen(true)}
+          aria-haspopup="dialog"
+          aria-expanded={menuOpen}
+        >
+          <span className="ico">☰</span>
+          <span>תפריט</span>
+        </button>
+      </nav>
+      <BottomSheetMenu open={menuOpen} onClose={() => setMenuOpen(false)} />
+    </>
   );
 }
