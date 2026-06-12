@@ -93,14 +93,12 @@ h3 {
 /* ===== App shell + theatre curtains ===== */
 
 .app-shell {
-  /* Anchored to the real viewport with fixed + inset:0. This is the reliable
-     way to fill the FULL screen height on iOS — installed PWA and Safari alike,
-     including Dynamic Island devices — and sidesteps the standalone-PWA bug
-     where 100vh/100dvh falls short and leaves a dead strip at the bottom. The
-     flex children then divide this exact height, so the bottom nav always sits
-     on the true bottom edge with no wasted space above or below it. */
-  position: fixed;
-  inset: 0;
+  /* Fills the dynamic viewport height. The bottom nav is NOT a flex child here —
+     it is pinned to the physical bottom edge (see .bottom-nav) so it can never
+     leave a gap, even on iOS standalone PWA where 100dvh is reported short by
+     the home-indicator inset. The shell therefore only owns the scroll area. */
+  height: 100%;
+  height: 100dvh;
   max-width: var(--maxw);
   margin: 0 auto;
   display: flex;
@@ -110,7 +108,8 @@ h3 {
   padding-top: env(safe-area-inset-top, 0px);
 }
 
-/* The one scrolling region. Everything that isn't the bottom nav lives here. */
+/* The one scrolling region. Owns its own scroll; its bottom padding clears the
+   fixed bottom nav so the last item is never hidden behind it. */
 .app-content {
   flex: 1 1 auto;
   min-height: 0;
@@ -176,9 +175,11 @@ h3 {
 
 .page {
   /* Safe-area top is applied once on .app-shell, so here we only clear the
-     decorative valance. The bottom space keeps the floating "+" from covering
-     the last item when scrolled to the end. */
-  padding: 30px clamp(16px, 6vw, 26px) 88px;
+     decorative valance. The bottom padding clears the fixed bottom nav (its
+     icon row + the home-indicator inset) plus the floating "+", so the last
+     item is never hidden behind the nav when scrolled to the end. */
+  padding: 30px clamp(16px, 6vw, 26px)
+    calc(var(--nav-h) + env(safe-area-inset-bottom, 0px) + 34px);
   position: relative;
   z-index: 1;
 }
@@ -465,26 +466,37 @@ h3 {
 /* ===== Bottom navigation ===== */
 
 .bottom-nav {
-  /* In-flow flex child: it always sits at the real bottom of the shell, above
-     the home indicator, and the dark background continues behind it. */
-  flex: 0 0 auto;
+  /* Pinned to the PHYSICAL bottom edge of the viewport (not a flex child of the
+     shell), so it can never float above a gap — even when iOS reports 100dvh
+     short of the screen in a standalone PWA. Centred within the app's max width.
+     Its height includes the home-indicator inset and the background fills that
+     whole area, so the bar continues edge-to-edge behind the indicator exactly
+     like a native iOS tab bar. No spacer sits below it. */
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  max-width: var(--maxw);
+  margin-inline: auto;
   z-index: 7;
   height: calc(var(--nav-h) + env(safe-area-inset-bottom, 0px));
+  /* The icon row occupies --nav-h; the inset below it is reserved for (and the
+     background continues behind) the home indicator. */
   padding-bottom: env(safe-area-inset-bottom, 0px);
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  background: linear-gradient(180deg, rgba(27, 22, 38, 0.85), rgba(11, 10, 18, 0.98));
+  background: linear-gradient(180deg, rgba(27, 22, 38, 0.92), rgba(11, 10, 18, 0.99));
   backdrop-filter: blur(12px);
   border-top: 1px solid var(--border);
 }
 .bottom-nav a,
 .bottom-nav .nav-menu-btn {
-  /* Full-cell tap target, perfectly centred icon. */
+  /* Full-cell tap target across the icon row, perfectly centred icon. */
   display: flex;
   align-items: center;
   justify-content: center;
   width: 100%;
-  height: 100%;
+  height: var(--nav-h);
   color: var(--muted);
   background: none;
   border: none;
