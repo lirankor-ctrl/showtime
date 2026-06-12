@@ -10,13 +10,11 @@ export default function BottomNav() {
   return (
     <>
       <nav className="bottom-nav">
-        <NavLink to="/" end>
+        <NavLink to="/" end aria-label="בית">
           <span className="ico">🎭</span>
-          <span>בית</span>
         </NavLink>
-        <NavLink to="/discover">
+        <NavLink to="/discover" aria-label="גילוי אירועים">
           <span className="ico">🌐</span>
-          <span>גילוי</span>
         </NavLink>
         <button
           type="button"
@@ -24,9 +22,9 @@ export default function BottomNav() {
           onClick={() => setMenuOpen(true)}
           aria-haspopup="dialog"
           aria-expanded={menuOpen}
+          aria-label="תפריט"
         >
           <span className="ico">☰</span>
-          <span>תפריט</span>
         </button>
       </nav>
       <BottomSheetMenu open={menuOpen} onClose={() => setMenuOpen(false)} />
