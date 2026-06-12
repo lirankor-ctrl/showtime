@@ -90,6 +90,13 @@ h3 {
   letter-spacing: -0.01em;
 }
 
+/* ===== TEMPORARY layout debug outlines (DebugViewport) ===== */
+html.debug-layout body { outline: 3px solid red; outline-offset: -3px; }
+html.debug-layout #root { outline: 3px solid lime; outline-offset: -6px; }
+html.debug-layout .app-shell { outline: 3px solid #39f; outline-offset: -9px; }
+html.debug-layout .app-content { outline: 3px solid magenta; outline-offset: -12px; }
+html.debug-layout .bottom-nav { outline: 3px solid yellow; outline-offset: -3px; }
+
 /* ===== App shell + theatre curtains ===== */
 
 .app-shell {

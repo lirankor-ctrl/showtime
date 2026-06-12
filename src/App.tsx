@@ -18,6 +18,7 @@ import SharedWithMe from "./pages/SharedWithMe";
 import Settings from "./pages/Settings";
 import AuthScreen from "./pages/AuthScreen";
 import ResetPassword from "./pages/ResetPassword";
+import DebugViewport from "./components/DebugViewport";
 import { useAuth } from "./store/AuthStore";
 
 function ConfigNotice() {
@@ -84,6 +85,7 @@ export default function App() {
           </main>
           <BottomNav />
           <MigrationPrompt />
+          <DebugViewport />
         </>
       )}
     </div>
