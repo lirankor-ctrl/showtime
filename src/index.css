@@ -18,7 +18,10 @@
   --radius-sm: 12px;
   --shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
   --maxw: 560px;
-  --nav-h: 68px;
+  /* Height of the bottom-nav icon row (the home-indicator inset is added on top
+     of this via padding-bottom). Kept compact so the icons sit close to the
+     bottom edge, comfortably above the indicator, with no empty band beneath. */
+  --nav-h: 58px;
   font-synthesis: none;
 }
 
@@ -469,9 +472,13 @@ h3 {
   /* Pinned to the PHYSICAL bottom edge of the viewport (not a flex child of the
      shell), so it can never float above a gap — even when iOS reports 100dvh
      short of the screen in a standalone PWA. Centred within the app's max width.
-     Its height includes the home-indicator inset and the background fills that
-     whole area, so the bar continues edge-to-edge behind the indicator exactly
-     like a native iOS tab bar. No spacer sits below it. */
+
+     Height is intentionally NOT a calc(): the icon row height lives on the items
+     (--nav-h) and the home-indicator clearance is added as padding-bottom, so
+     the box height = icon row + inset with the safe area counted exactly ONCE.
+     A single flat background fills the whole bar down to the physical edge, so
+     the home-indicator area reads as part of the bar (no dark "void" band) —
+     like a native iOS tab bar. No spacer/margin sits below it. */
   position: fixed;
   bottom: 0;
   left: 0;
@@ -479,14 +486,11 @@ h3 {
   max-width: var(--maxw);
   margin-inline: auto;
   z-index: 7;
-  height: calc(var(--nav-h) + env(safe-area-inset-bottom, 0px));
-  /* The icon row occupies --nav-h; the inset below it is reserved for (and the
-     background continues behind) the home indicator. */
   padding-bottom: env(safe-area-inset-bottom, 0px);
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  background: linear-gradient(180deg, rgba(27, 22, 38, 0.92), rgba(11, 10, 18, 0.99));
-  backdrop-filter: blur(12px);
+  background: rgba(16, 13, 24, 0.96);
+  backdrop-filter: blur(14px);
   border-top: 1px solid var(--border);
 }
 .bottom-nav a,
