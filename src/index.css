@@ -19,9 +19,9 @@
   --shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
   --maxw: 560px;
   /* Height of the bottom-nav icon row (the home-indicator inset is added on top
-     of this via padding-bottom). Kept compact so the icons sit close to the
-     bottom edge, comfortably above the indicator, with no empty band beneath. */
-  --nav-h: 58px;
+     of this via padding-bottom). The nav's total height is
+     calc(--nav-h + safe-area-inset-bottom); page content reserves the same. */
+  --nav-h: 72px;
   /* Single source of truth for the painted theatre background. Applied to every
      layer (html, body, #root, .app-shell) so no transparent gap can ever fall
      through to the black page canvas — e.g. below the bottom nav on iPhone. */
@@ -484,28 +484,25 @@ h3 {
 /* ===== Bottom navigation ===== */
 
 .bottom-nav {
-  /* Pinned to the PHYSICAL bottom edge of the viewport (not a flex child of the
-     shell), so it can never float above a gap — even when iOS reports 100dvh
-     short of the screen in a standalone PWA. Centred within the app's max width.
-
-     Height is intentionally NOT a calc(): the icon row height lives on the items
-     (--nav-h) and the home-indicator clearance is added as padding-bottom, so
-     the box height = icon row + inset with the safe area counted exactly ONCE.
-     A single flat background fills the whole bar down to the physical edge, so
-     the home-indicator area reads as part of the bar (no dark "void" band) —
-     like a native iOS tab bar. No spacer/margin sits below it. */
+  /* Fixed, fully out of document flow, pinned to the physical bottom edge.
+     Total height = icon row (--nav-h) + the home-indicator inset, so the bar's
+     opaque background extends all the way to the physical bottom of the screen.
+     padding-bottom lifts the icons above the home indicator (safe area counted
+     exactly ONCE). The background is the SAME dark app background as
+     html/body/#root/.app-shell, so there can be no contrasting strip even if a
+     browser ever reports the viewport a hair short. No spacer sits below it. */
   position: fixed;
-  bottom: 0;
   left: 0;
   right: 0;
+  bottom: 0;
   max-width: var(--maxw);
   margin-inline: auto;
-  z-index: 7;
+  z-index: 1000;
+  height: calc(var(--nav-h) + env(safe-area-inset-bottom, 0px));
   padding-bottom: env(safe-area-inset-bottom, 0px);
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  background: rgba(16, 13, 24, 0.96);
-  backdrop-filter: blur(14px);
+  background: var(--bg);
   border-top: 1px solid var(--border);
 }
 .bottom-nav a,
