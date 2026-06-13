@@ -47,11 +47,16 @@ html,
 body,
 #root {
   margin: 0;
+  /* Chain 100% from the initial containing block — on iOS standalone (with
+     viewport-fit=cover) the ICB IS the full physical screen, so these layers
+     reliably reach the very bottom edge. We deliberately do NOT use 100dvh
+     here: the dvh unit can compute short of the physical screen on iOS, which
+     is exactly what left a black strip below the nav. Only the app shell uses
+     dvh (for the scroll area); the roots use %, so the painted background
+     always fills to the physical bottom. */
+  width: 100%;
   height: 100%;
-  height: 100dvh;
-  /* min-height guarantees each layer fills the full visual viewport even if a
-     browser reports 100dvh short of the physical screen for a frame. */
-  min-height: 100dvh;
+  min-height: 100%;
   /* Same app background on every layer (see --app-bg). The solid --bg fallback
      also propagates to the page canvas, so overscroll / the area behind the
      home indicator can never reveal a black strip. */
@@ -502,20 +507,6 @@ h3 {
   background: rgba(16, 13, 24, 0.96);
   backdrop-filter: blur(14px);
   border-top: 1px solid var(--border);
-}
-/* Bleed the bar's own colour below its bottom edge. If iOS ever reports the
-   visual viewport slightly short of the physical screen, this fills the gap
-   beneath the nav with the SAME colour as the bar — so the home-indicator
-   area always reads as part of the bar, never as a black strip. */
-.bottom-nav::after {
-  content: "";
-  position: absolute;
-  top: 100%;
-  left: 0;
-  right: 0;
-  height: 80px;
-  background: rgba(16, 13, 24, 0.96);
-  pointer-events: none;
 }
 .bottom-nav a,
 .bottom-nav .nav-menu-btn {
