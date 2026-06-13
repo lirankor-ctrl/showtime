@@ -88,11 +88,21 @@ export async function shareEventWithUser(
   return (data as ShareResult) ?? "ok";
 }
 
-/** Pending shares addressed to the signed-in user (RLS-scoped). */
-export async function fetchSharedWithMe(): Promise<SharedEvent[]> {
+/**
+ * Pending shares addressed to the signed-in user.
+ *
+ * The RLS select policy intentionally lets BOTH the recipient and the sender
+ * read a share row, so we MUST scope this query to the recipient explicitly —
+ * otherwise a sender would also see their own outgoing share inside
+ * "אירועים ששותפו איתי". "Shared with me" = recipient_user_id = current user.
+ */
+export async function fetchSharedWithMe(
+  recipientUserId: string,
+): Promise<SharedEvent[]> {
   const { data, error } = await supabase
     .from("shared_events")
     .select("*")
+    .eq("recipient_user_id", recipientUserId)
     .eq("status", "pending")
     .order("created_at", { ascending: false });
   if (error) throw dbError(error, "טעינת השיתופים נכשלה");

@@ -66,6 +66,17 @@ export type ExternalLinkRow = {
   created_at: string;
 }
 
+export type UserExternalLinkRow = {
+  id: string;
+  user_id: string;
+  category: string;
+  title: string;
+  description: string | null;
+  url: string;
+  created_at: string;
+  updated_at: string;
+}
+
 export type SharedEventRow = {
   id: string;
   sender_user_id: string;
@@ -130,6 +141,15 @@ export interface Database {
           "id" | "created_at" | "active" | "sort_order" | "description"
         >;
         Update: Partial<ExternalLinkRow>;
+        Relationships: [];
+      };
+      user_external_links: {
+        Row: UserExternalLinkRow;
+        Insert: Insert<
+          UserExternalLinkRow,
+          "id" | "created_at" | "updated_at" | "description"
+        >;
+        Update: Partial<UserExternalLinkRow>;
         Relationships: [];
       };
     };

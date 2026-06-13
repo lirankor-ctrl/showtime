@@ -1397,6 +1397,43 @@ code {
   font-weight: 800;
 }
 
+/* Personal (user-created) discovery links: the card + its edit/delete row. */
+.link-card-wrap {
+  margin-bottom: 12px;
+}
+.link-card-wrap .link-card {
+  margin-bottom: 0;
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+}
+.personal-badge {
+  display: inline-block;
+  margin-inline-start: 8px;
+  vertical-align: middle;
+  background: rgba(224, 181, 74, 0.16);
+  border: 1px solid rgba(224, 181, 74, 0.45);
+  color: var(--gold-soft);
+  font-size: 0.66rem;
+  font-weight: 800;
+  padding: 2px 8px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+.link-actions {
+  display: flex;
+  gap: 8px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-top: none;
+  border-radius: 0 0 var(--radius) var(--radius);
+  padding: 8px 12px;
+}
+.link-actions .btn {
+  flex: 1;
+  padding: 8px 10px;
+  font-size: 0.85rem;
+}
+
 /* ===== Event completion flow ===== */
 
 .complete-cta {
@@ -1428,4 +1465,178 @@ code {
   letter-spacing: 0.08em;
   color: var(--gold);
   font-weight: 800;
+}
+
+/* ===== Theatrical opening sequence ===== */
+/* Plays once on app launch. The app is already mounted behind this overlay; the
+   curtains part from the center to reveal it. Timeline (~3.4s):
+   0.0s dark → 0.3s spotlight in → 0.7s title in → 1.1s quote in →
+   2.4s title/quote out + backdrop fade + curtains part → 3.3s clear. */
+.opening {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+/* Dark stage behind the curtains; fades away at the end so the app shows. */
+.opening-bg {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(120% 90% at 50% 35%, #140b18 0%, #000 75%);
+  animation: opening-bg-out 0.9s ease 2.4s forwards;
+}
+
+/* Soft golden spotlight pooled on the closed curtains. */
+.opening-spot {
+  position: absolute;
+  left: 50%;
+  top: 38%;
+  width: 120vw;
+  height: 120vw;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(
+    closest-side,
+    rgba(224, 181, 74, 0.32) 0%,
+    rgba(224, 181, 74, 0.12) 40%,
+    transparent 70%
+  );
+  opacity: 0;
+  animation:
+    opening-spot-in 0.6s ease 0.3s forwards,
+    opening-fade-out 0.7s ease 2.4s forwards;
+}
+
+/* The two red curtain halves, each covering one side, meeting at the center. */
+.opening-curtain {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 52%;
+  background: repeating-linear-gradient(
+    90deg,
+    var(--curtain-dark) 0,
+    var(--curtain-2) 14px,
+    var(--curtain) 28px,
+    var(--curtain-dark) 42px
+  );
+  box-shadow: inset 0 0 60px rgba(0, 0, 0, 0.7);
+  will-change: transform;
+}
+.opening-curtain.left {
+  left: 0;
+  /* Gold trim along the meeting edge. */
+  border-right: 2px solid rgba(224, 181, 74, 0.55);
+  animation: opening-part-left 1s cubic-bezier(0.7, 0, 0.3, 1) 2.4s forwards;
+}
+.opening-curtain.right {
+  right: 0;
+  border-left: 2px solid rgba(224, 181, 74, 0.55);
+  animation: opening-part-right 1s cubic-bezier(0.7, 0, 0.3, 1) 2.4s forwards;
+}
+
+/* Title + quote, presented in front of the closed curtains. */
+.opening-center {
+  position: relative;
+  z-index: 2;
+  text-align: center;
+  padding: 0 28px;
+  opacity: 0;
+  animation:
+    opening-center-in 0.8s cubic-bezier(0.22, 1, 0.36, 1) 0.7s forwards,
+    opening-fade-out 0.5s ease 2.2s forwards;
+}
+.opening-logo {
+  width: 84px;
+  height: 84px;
+  border-radius: 20px;
+  object-fit: cover;
+  box-shadow: 0 0 0 1px rgba(224, 181, 74, 0.5), 0 12px 30px rgba(0, 0, 0, 0.6);
+  margin-bottom: 14px;
+}
+.opening-title {
+  font-size: 2.2rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  background: linear-gradient(180deg, var(--gold-soft), var(--gold));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 4px 14px rgba(224, 181, 74, 0.35));
+}
+.opening-sub {
+  font-size: 0.95rem;
+  color: var(--gold-soft);
+  font-weight: 700;
+  margin-top: 6px;
+}
+.opening-quote {
+  margin: 18px auto 0;
+  max-width: 320px;
+  font-size: 1.05rem;
+  line-height: 1.6;
+  color: var(--text);
+  font-weight: 600;
+}
+.opening-quote cite {
+  display: block;
+  margin-top: 8px;
+  font-size: 0.82rem;
+  font-style: normal;
+  color: var(--muted);
+}
+
+@keyframes opening-spot-in {
+  to {
+    opacity: 1;
+  }
+}
+@keyframes opening-fade-out {
+  to {
+    opacity: 0;
+  }
+}
+@keyframes opening-bg-out {
+  to {
+    opacity: 0;
+  }
+}
+@keyframes opening-center-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+@keyframes opening-part-left {
+  to {
+    transform: translateX(-101%);
+  }
+}
+@keyframes opening-part-right {
+  to {
+    transform: translateX(101%);
+  }
+}
+
+/* Reduced motion: no sliding curtains — just a brief, gentle fade. */
+@media (prefers-reduced-motion: reduce) {
+  .opening.reduced .opening-curtain {
+    animation: none;
+  }
+  .opening.reduced {
+    animation: opening-fade-out 0.45s ease 0.15s forwards;
+  }
+  .opening.reduced .opening-bg,
+  .opening.reduced .opening-spot,
+  .opening.reduced .opening-center {
+    animation: opening-spot-in 0.25s ease forwards;
+  }
 }

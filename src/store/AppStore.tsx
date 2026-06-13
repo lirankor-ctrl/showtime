@@ -97,7 +97,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const [e, s, shares] = await Promise.all([
       fetchEvents(),
       fetchSubscriptions(),
-      fetchSharedWithMe(),
+      fetchSharedWithMe(userId),
     ]);
     setEvents(e);
     setSubscriptions(s);

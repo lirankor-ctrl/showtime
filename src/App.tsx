@@ -1,5 +1,6 @@
 import { Routes, Route } from "react-router-dom";
 import Curtains from "./components/Curtains";
+import Opening from "./components/Opening";
 import BottomNav from "./components/BottomNav";
 import MigrationPrompt from "./components/MigrationPrompt";
 import Home from "./pages/Home";
@@ -51,6 +52,7 @@ export default function App() {
 
   return (
     <div className="app-shell">
+      <Opening />
       <div className="valance" aria-hidden />
       <Curtains />
 

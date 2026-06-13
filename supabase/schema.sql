@@ -410,3 +410,46 @@ insert into public.external_links (category, title, description, url, sort_order
   -- ספורט
   ('sports', 'Eventim', 'כרטיסים לאירועי ספורט', 'https://www.eventim.co.il', 1)
 on conflict (category, title) do nothing;
+
+-- ============================================================================
+-- User-created discovery links — PRIVATE per-user external links, shown in the
+-- Discovery section alongside the curated catalogue. Each user manages ONLY
+-- their own rows (RLS), so personal links are never visible to anyone else.
+-- ============================================================================
+
+create table if not exists public.user_external_links (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users (id) on delete cascade,
+  category text not null,
+  title text not null,
+  description text,
+  url text not null,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create index if not exists user_external_links_user_category_idx
+  on public.user_external_links (user_id, category);
+
+alter table public.user_external_links enable row level security;
+
+drop policy if exists "user_external_links_select_own" on public.user_external_links;
+create policy "user_external_links_select_own" on public.user_external_links
+  for select using (auth.uid() = user_id);
+
+drop policy if exists "user_external_links_insert_own" on public.user_external_links;
+create policy "user_external_links_insert_own" on public.user_external_links
+  for insert with check (auth.uid() = user_id);
+
+drop policy if exists "user_external_links_update_own" on public.user_external_links;
+create policy "user_external_links_update_own" on public.user_external_links
+  for update using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+drop policy if exists "user_external_links_delete_own" on public.user_external_links;
+create policy "user_external_links_delete_own" on public.user_external_links
+  for delete using (auth.uid() = user_id);
+
+drop trigger if exists user_external_links_set_updated_at on public.user_external_links;
+create trigger user_external_links_set_updated_at
+  before update on public.user_external_links
+  for each row execute function public.set_updated_at();
