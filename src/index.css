@@ -22,6 +22,12 @@
      of this via padding-bottom). Kept compact so the icons sit close to the
      bottom edge, comfortably above the indicator, with no empty band beneath. */
   --nav-h: 58px;
+  /* Single source of truth for the painted theatre background. Applied to every
+     layer (html, body, #root, .app-shell) so no transparent gap can ever fall
+     through to the black page canvas — e.g. below the bottom nav on iPhone. */
+  --app-bg:
+    radial-gradient(1200px 600px at 50% -10%, #241433 0%, transparent 60%),
+    linear-gradient(180deg, var(--bg-2), var(--bg) 60%);
   font-synthesis: none;
 }
 
@@ -43,6 +49,14 @@ body,
   margin: 0;
   height: 100%;
   height: 100dvh;
+  /* min-height guarantees each layer fills the full visual viewport even if a
+     browser reports 100dvh short of the physical screen for a frame. */
+  min-height: 100dvh;
+  /* Same app background on every layer (see --app-bg). The solid --bg fallback
+     also propagates to the page canvas, so overscroll / the area behind the
+     home indicator can never reveal a black strip. */
+  background: var(--app-bg);
+  background-color: var(--bg);
 }
 
 body {
@@ -52,19 +66,10 @@ body {
 
 /* Dark base so overscroll / rubber-banding never reveals a white page. */
 html {
-  background: var(--bg);
   color: var(--text);
   font-family: "Heebo", "Assistant", "Segoe UI", system-ui, -apple-system, sans-serif;
   font-size: 16px;
   line-height: 1.5;
-}
-
-/* The painted theatre background lives on #root so it fills the whole shell. */
-#root {
-  background:
-    radial-gradient(1200px 600px at 50% -10%, #241433 0%, transparent 60%),
-    linear-gradient(180deg, var(--bg-2), var(--bg) 60%);
-  background-color: var(--bg);
 }
 
 a {
@@ -102,8 +107,13 @@ h3 {
      the home-indicator inset. The shell therefore only owns the scroll area. */
   height: 100%;
   height: 100dvh;
+  min-height: 100dvh;
   max-width: var(--maxw);
   margin: 0 auto;
+  /* Same app background as html/body/#root, so the shell column is never a
+     transparent pass-through to the canvas. */
+  background: var(--app-bg);
+  background-color: var(--bg);
   display: flex;
   flex-direction: column;
   /* Push everything below the notch / Dynamic Island. The curtains stay full
@@ -492,6 +502,20 @@ h3 {
   background: rgba(16, 13, 24, 0.96);
   backdrop-filter: blur(14px);
   border-top: 1px solid var(--border);
+}
+/* Bleed the bar's own colour below its bottom edge. If iOS ever reports the
+   visual viewport slightly short of the physical screen, this fills the gap
+   beneath the nav with the SAME colour as the bar — so the home-indicator
+   area always reads as part of the bar, never as a black strip. */
+.bottom-nav::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  height: 80px;
+  background: rgba(16, 13, 24, 0.96);
+  pointer-events: none;
 }
 .bottom-nav a,
 .bottom-nav .nav-menu-btn {
