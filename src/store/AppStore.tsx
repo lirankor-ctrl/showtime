@@ -8,6 +8,7 @@ import {
   type ReactNode,
 } from "react";
 import type { ShowEvent, Subscription, SharedEvent } from "../types";
+import { compareByStart } from "../utils/eventStatus";
 import {
   deleteEventRow,
   fetchEvents,
@@ -160,10 +161,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   // Keep the in-memory list in the same order the server returns (date asc,
   // then time) so optimistic inserts land in the right place before a reload.
   const sortEvents = (list: ShowEvent[]): ShowEvent[] =>
-    [...list].sort(
-      (a, b) =>
-        a.date.localeCompare(b.date) || (a.time ?? "").localeCompare(b.time ?? ""),
-    );
+    [...list].sort(compareByStart);
 
   const remainingOf = useCallback(
     (subId: string): number => {

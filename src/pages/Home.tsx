@@ -8,7 +8,7 @@ import CategoryBadge from "../components/CategoryBadge";
 import EventCountdown from "../components/EventCountdown";
 import { useToast } from "../components/useToast";
 import { formatLong, countdownLabel, isToday } from "../utils/dates";
-import { isUpcoming, isMemory, canComplete } from "../utils/eventStatus";
+import { isUpcoming, isMemory, canComplete, compareByStart } from "../utils/eventStatus";
 import { shareEvent } from "../utils/share";
 
 export default function Home() {
@@ -17,7 +17,8 @@ export default function Home() {
   const { toast, showToast } = useToast();
 
   const { hero, upcoming, pastCount } = useMemo(() => {
-    const future = events.filter(isUpcoming);
+    // One unified list, nearest first by date + start time (category never matters).
+    const future = events.filter(isUpcoming).sort(compareByStart);
     const past = events.filter(isMemory);
     return {
       hero: future[0],

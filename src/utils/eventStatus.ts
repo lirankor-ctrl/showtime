@@ -27,3 +27,8 @@ export function hasStarted(e: ShowEvent): boolean {
 export function canComplete(e: ShowEvent): boolean {
   return !e.archived && isToday(e.date) && hasStarted(e);
 }
+
+/** Chronological order by the event's own date + start time (no time → first that day). */
+export function compareByStart(a: ShowEvent, b: ShowEvent): number {
+  return a.date.localeCompare(b.date) || (a.time ?? "").localeCompare(b.time ?? "");
+}

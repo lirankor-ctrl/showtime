@@ -6,8 +6,8 @@ import AppHeader from "../components/AppHeader";
 import EventCard from "../components/EventCard";
 import EmptyState from "../components/EmptyState";
 import { CATEGORIES } from "../utils/categories";
-import { isMemory } from "../utils/eventStatus";
-import type { CategoryId, ShowEvent } from "../types";
+import { isMemory, compareByStart as byDate } from "../utils/eventStatus";
+import type { CategoryId } from "../types";
 
 type When = "all" | "upcoming" | "past";
 type Sort = "soon" | "recent" | "rating";
@@ -69,9 +69,6 @@ export default function EventsList() {
       }
       return true;
     });
-
-    const byDate = (a: ShowEvent, b: ShowEvent) =>
-      a.date.localeCompare(b.date) || (a.time ?? "").localeCompare(b.time ?? "");
 
     return [...list].sort((a, b) => {
       if (sort === "recent") return -byDate(a, b);
