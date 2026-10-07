@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { useApp } from "../store/AppStore";
 import CategoryBadge from "../components/CategoryBadge";
 import RatingStars from "../components/RatingStars";
@@ -12,6 +12,11 @@ import { shareEvent } from "../utils/share";
 export default function EventDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
+  // Set by EventForm when the event was created but its poster upload failed.
+  const posterFailed = Boolean(
+    (location.state as { posterFailed?: boolean } | null)?.posterFailed,
+  );
   const {
     events,
     subscriptions,
@@ -146,6 +151,13 @@ export default function EventDetail() {
         </span>
       </div>
       <h1 style={{ fontSize: "1.6rem", marginBottom: 14 }}>{event.title}</h1>
+
+      {posterFailed && !event.posterImagePath && (
+        <div className="warn">
+          האירוע נשמר, אך העלאת הכרזה נכשלה.{" "}
+          <Link to={`/events/${event.id}/edit`}>אפשר לנסות שוב מעמוד העריכה</Link>
+        </div>
+      )}
 
       {event.posterImagePath && posterUrls[event.id] && (
         <div className="detail-poster">

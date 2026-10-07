@@ -6,6 +6,7 @@ import { todayStr } from "../utils/dates";
 import RatingStars from "../components/RatingStars";
 import PhotoGallery from "../components/PhotoGallery";
 import PosterField from "../components/PosterField";
+import PosterDraftField from "../components/PosterDraftField";
 import type { CategoryId } from "../types";
 
 // Quarter-hour options (00/15/30/45) covering a full day, offered as quick
@@ -30,12 +31,14 @@ const empty: NewEventInput = {
 export default function EventForm() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { events, subscriptions, saveEvent } = useApp();
+  const { events, subscriptions, saveEvent, setEventPoster } = useApp();
   const editing = Boolean(id);
 
   const [form, setForm] = useState<NewEventInput>(empty);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  // New events only: the poster picked before the event exists (uploaded after create).
+  const [posterFile, setPosterFile] = useState<File | null>(null);
   const loadedRef = useRef(false);
 
   // Load the existing event once it's available — but only once, so unsaved
@@ -78,13 +81,28 @@ export default function EventForm() {
     };
     setBusy(true);
     setError("");
+    let savedId: string;
     try {
-      const savedId = await saveEvent(payload);
-      navigate(`/events/${savedId}`);
+      savedId = await saveEvent(payload);
     } catch (err) {
+      // Nothing was created — keep the form (and picked poster) for a retry.
       setError(err instanceof Error ? err.message : "שמירת האירוע נכשלה");
       setBusy(false);
+      return;
     }
+
+    // The event exists now; a poster failure must not be reported as a
+    // failed save (a retry would create a duplicate event).
+    let posterFailed = false;
+    if (!editing && posterFile) {
+      try {
+        await setEventPoster(savedId, posterFile);
+      } catch (err) {
+        console.error("[SHOW TIME] העלאת הכרזה נכשלה:", err);
+        posterFailed = true;
+      }
+    }
+    navigate(`/events/${savedId}`, posterFailed ? { state: { posterFailed } } : undefined);
   }
 
   return (
@@ -126,9 +144,7 @@ export default function EventForm() {
           {editing ? (
             <PosterField eventId={id!} />
           ) : (
-            <p className="muted" style={{ fontSize: "0.82rem", margin: 0 }}>
-              ניתן להוסיף כרזה לאחר שמירת האירוע, מתוך עמוד עריכת האירוע.
-            </p>
+            <PosterDraftField file={posterFile} onChange={setPosterFile} disabled={busy} />
           )}
         </div>
 
@@ -292,7 +308,7 @@ export default function EventForm() {
 
         <div className="btn-row" style={{ marginTop: 8 }}>
           <button type="submit" className="btn primary block" disabled={busy}>
-            {busy ? "שומר…" : editing ? "שמירת שינויים" : "הוספת האירוע"}
+            {busy ? (posterFile && !editing ? "שומר ומעלה כרזה…" : "שומר…") : editing ? "שמירת שינויים" : "הוספת האירוע"}
           </button>
         </div>
       </form>
